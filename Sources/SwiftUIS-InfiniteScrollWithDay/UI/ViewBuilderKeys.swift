@@ -86,48 +86,12 @@ public extension EnvironmentValues {
     }
 }
 
-// MARK: - 修饰符（透出到调用方）
+// MARK: - 说明
+//
+// 自定义 modifier 已移动到 `InfiniteDayScrollView` 的 extension（见 InfiniteDayScrollView.swift），
+// 采用「值类型副本」模式（参考 ScalingHeaderScrollView）：modifier 返回同类型副本，
+// 保持链式调用类型一致。
+//
+// 不再使用 `extension View`，避免与 SwiftUIS-InfiniteScrollWithDate / SwiftUIS-InfiniteScroll
+// 的同名 modifier 在跨模块 import 时产生歧义。
 
-public extension View {
-
-    /// 自定义日期头。
-    ///
-    /// 闭包接收 `DayHeaderContext`，包含日期、记录数、是否今天等。
-    ///
-    /// 例：
-    /// ```swift
-    /// .dayHeader { ctx in
-    ///     HStack {
-    ///         Text(ctx.date, format: .dateTime.month().day())
-    ///         Spacer()
-    ///         if ctx.isToday { Text("今天").bold() }
-    ///     }
-    /// }
-    /// ```
-    func dayHeader<H: View>(@ViewBuilder _ builder: @escaping (DayHeaderContext) -> H) -> some View {
-        environment(\.dayHeaderView, DayHeaderViewBuilder { context in
-            AnyView(builder(context))
-        })
-    }
-
-    /// 自定义空日视图（仅在 `.showAll` / 单空日 case 渲染）。
-    func emptyDayView<E: View>(@ViewBuilder _ builder: @escaping () -> E) -> some View {
-        environment(\.dayEmptyView, DayEmptyViewBuilder {
-            AnyView(builder())
-        })
-    }
-
-    /// 自定义折叠区间视图（仅在 `.collapse` 策略下渲染）。
-    func gapView<G: View>(@ViewBuilder _ builder: @escaping (GapRange) -> G) -> some View {
-        environment(\.dayGapView, DayGapViewBuilder { gap in
-            AnyView(builder(gap))
-        })
-    }
-
-    /// 自定义加载视图。
-    func loadingView<L: View>(@ViewBuilder _ builder: @escaping () -> L) -> some View {
-        environment(\.dayLoadingView, DayLoadingViewBuilder {
-            AnyView(builder())
-        })
-    }
-}

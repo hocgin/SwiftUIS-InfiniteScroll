@@ -7,6 +7,32 @@
 
 （暂无）
 
+## 已完成
+
+- [x] **SwiftUIS-InfiniteScroll** 模块（基于游标分页的时间轴组件）
+  - [x] M0 基础设施：Package.swift 新增 target + product + 测试 target
+  - [x] M1 Models 与 Core
+    - [x] `Models/Page.swift`：分页结果（records + nextId + hasMore）
+    - [x] `Models/TimelineItem.swift`：业务模型协议（id + date）
+    - [x] `Models/TimelineSection.swift`：分组结果
+    - [x] `Core/TimelineLoader.swift` + `AnyTimelineLoader`：loadPage(nextId:) 协议
+    - [x] `Core/TimelineGrouping.swift`：day / week / month / year
+    - [x] `Core/TimelineState.swift`：idle / loading / loaded / empty / failed
+    - [x] `Core/TimelineConfig.swift`：grouping / showEmptyDays / preloadThreshold / restoreScrollPosition
+    - [x] `Core/TimelineEngine.swift`：@Observable @MainActor 状态机 + 分组聚合 + ScrollCommand
+    - [x] `Extensions/Date+TimelineGrouping.swift`：分组键 + next/prev 步进
+    - [x] 11 个单元测试通过（Date/Page/TimelineEngine）
+  - [x] M2 Views 与 Configuration
+    - [x] `Views/InfiniteScrollView.swift`：主组件（LazyVStack + Sticky Header + preloadThreshold）
+    - [x] `Views/TimelineSectionView.swift`：单分组渲染
+    - [x] `Views/DateHeaderView` / `LoadingTimelineView` / `ErrorTimelineView` / `EmptyTimelineView`：默认样式
+    - [x] `Configuration/ViewBuilderKeys.swift`：dateHeader/loadingView/errorView/emptyView 四个 EnvironmentKey
+    - [x] `.refreshable()` 下拉刷新
+  - [x] M3 ScrollToDate 与 Demo
+    - [x] `Configuration/InfiniteScrollProxy.swift`：scrollProxy binding + scrollTo(Date)
+    - [x] Demo Tab4 演示（MockTimelineLoader + 跳转按钮）
+    - [x] 全部 52 个测试通过
+
 ## 待办
 
 - [ ] v1.2 高级布局（Timeline Layout / Waterfall Layout / Calendar Integration / Widget Support）

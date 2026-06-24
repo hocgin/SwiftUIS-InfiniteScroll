@@ -1,165 +1,167 @@
-# SwiftIS-InfiniteScrollWithDay
+# SwiftUIS-InfiniteScroll
 
 [![Swift 6](https://img.shields.io/badge/Swift-6-orange.svg)](https://swift.org)
 [![iOS 17+](https://img.shields.io/badge/iOS-17%2B-blue.svg)](https://developer.apple.com/ios/)
 [![macOS 15+](https://img.shields.io/badge/macOS-15%2B-blue.svg)](https://developer.apple.com/macos/)
 
-> An infinitely scrolling, day-grouped timeline component for SwiftUI.
-> 一个专为 SwiftUI 打造的按日期分组无限滚动组件。
+> 一组 SwiftUI 无限滚动组件，覆盖「通用列表 / 日期分组时间轴 / 按天分组时间线」三类场景。
 
-适用于：时间记录、日记、复盘、计划管理、习惯追踪、运动记录、财务流水、事件时间线。
+本仓库包含三个独立可发布的 SwiftPM 库：
 
-## 特性
+| 模块 | 主组件 | 数据协议 | 适用场景 |
+|---|---|---|---|
+| **SwiftUIS-InfiniteScroll** | `InfiniteScrollView` | `InfiniteLoader.load(nextId:)` | 通用信息流 / 聊天 / 商品列表 |
+| **SwiftUIS-InfiniteScrollWithDate** | `InfiniteDateScrollView` | `TimelineLoader.loadPage(nextId:)` | 按日/周/月/年分组的时间轴 |
+| **SwiftUIS-InfiniteScrollWithDay** | `InfiniteDayScrollView` | `DayDataSource.items(on:)` | 按天分组的日记 / 复盘 / 习惯 |
 
-- 按日分组（LazyVStack + ForEach）
-- 双向无限滚动（默认仅向下，可选向上）
-- 三种空日策略：`showAll` / `hideEmpty` / `collapse`（推荐默认）
-- Sticky Header（iOS 17+ 原生 `pinnedViews`）
-- 日期定位：`scrollToToday` / `scrollTo(Date)` / `scrollToMonth(Date)`
-- 自定义：日期头 / 空日 / 折叠区间 / 加载视图
-- Swift 6 严格并发安全
-- 性能：10k 日期 + 100k 记录下 60 FPS
+三个模块互不依赖，按需引入。
 
 ## 安装
 
-Swift Package Manager：
-
 ```swift
-.package(url: "https://github.com/hocgin/SwiftUIS-InfiniteScrollWithDay.git", .upToNextMajor(from: "1.0.0"))
+dependencies: [
+    .package(url: "https://github.com/hocgin/SwiftUIS-InfiniteScroll.git", .upToNextMajor(from: "2.0.0"))
+]
 ```
 
-## 三种用法
-
-### 1. 基础版（无数据源）
-
-适合：纯迭代日期，不需要异步数据。
+按需选择 target 依赖：
 
 ```swift
-import SwiftIS_InfiniteScrollWithDay
+.target(name: "App", dependencies: [
+    .product(name: "SwiftUIS-InfiniteScroll", package: "SwiftUIS-InfiniteScroll"),
+    // 或 / 和
+    .product(name: "SwiftUIS-InfiniteScrollWithDate", package: "SwiftUIS-InfiniteScroll"),
+    .product(name: "SwiftUIS-InfiniteScrollWithDay", package: "SwiftUIS-InfiniteScroll"),
+])
+```
 
-InfiniteDayScrollView(range: .past(days: 365)) { day in
-    TimelineSection(date: day)
+## 三模块速览
+
+### 1. SwiftUIS-InfiniteScroll — 通用游标分页列表
+
+最基础款，无业务耦合。只要后端能给出「下一页游标」即可对接。
+
+```swift
+import SwiftUIS_InfiniteScroll
+
+struct Post: Sendable, Identifiable {
+    let id: String
+    let title: String
 }
+
+struct PostLoader: InfiniteLoader {
+    func load(nextId: String?) async throws -> Page<Post> {
+        let (records, cursor) = try await api.fetch(after: nextId)
+        return Page(records: records, nextId: cursor)
+    }
+}
+
+InfiniteScrollView(loader: PostLoader()) { post in
+    Text(post.title)
+}
+.emptyView { ContentUnavailableView("空空如也", systemImage: "tray") }
+.errorView { error, retry in ErrorView(error, retry: retry) }
+.footerView { state, retry in FooterView(state: state, retry: retry) }
 ```
 
-### 2. 数据驱动版（默认配置）
+特性：预加载策略 `.fixed(N)` / `.ratio(0.8)`；首次失败与分页失败均不丢数据；下拉刷新默认关闭（按需附加 `.refreshable`）。
 
-实现 `DayDataSource` 协议即可。
+### 2. SwiftUIS-InfiniteScrollWithDate — 多粒度时间轴
+
+按 `day / week / month / year` 自动分组；`Item` 需带 `date` 字段。
 
 ```swift
+import SwiftUIS_InfiniteScrollWithDate
+
+struct Event: TimelineItem {
+    let id: String
+    let date: Date
+    let title: String
+}
+
+struct EventLoader: TimelineLoader {
+    func loadPage(nextId: String?) async throws -> Page<Event> {
+        let (events, cursor) = try await api.events(after: nextId)
+        return Page(records: events, nextId: cursor)
+    }
+}
+
+InfiniteDateScrollView(loader: EventLoader(), grouping: .month) { event in
+    Text(event.title)
+}
+.header { date, grouping in MonthHeader(date: date, grouping: grouping) }
+.errorView { error, retry in ErrorView(error, retry: retry) }
+```
+
+特性：游标分页驱动 + 多粒度分组；空日填充（`showEmptyDays`）；`preloadThreshold`；`scrollProxy.scrollTo(date)` 跳转。
+
+### 3. SwiftUIS-InfiniteScrollWithDay — 按天分组的日记 / 时间记录
+
+按天预知边界（与上一款的关键差异：日期是「列骨架」，由组件侧迭代展开，调用方只回答"这一天有哪些记录"）。
+
+```swift
+import SwiftUIS_InfiniteScrollWithDay
+
+struct Record: Sendable, Identifiable {
+    let id = UUID()
+    let date: Date
+    let title: String
+}
+
 struct RecordSource: DayDataSource {
     func items(on day: Date) async throws -> [Record] {
-        await database.records(on: day)
+        try await database.records(on: day)
     }
 }
 
-InfiniteDayScrollView(source: RecordSource()) { day, records in
-    RecordList(records)
+InfiniteDayScrollView(source: RecordSource(), emptyStrategy: .collapse) { day, records in
+    ForEach(records) { Text($0.title) }
 }
+.header { ctx in DayHeader(context: ctx) }
+.gapView { gap in GapCard(gap) }
 ```
 
-### 3. 完整版（自定义所有）
+特性：三种空日策略（`showAll` / `hideEmpty` / `collapse`）；Sticky Header；双向加载（`forwardLoading`）；`DayScrollProxy.scrollToToday / scrollTo / scrollToMonth`。
+
+## 修饰符
+
+三个模块均采用「值类型副本」模式，修饰符限定到对应主组件、返回同类型，链式调用不断类型：
 
 ```swift
-InfiniteDayScrollView(
-    source: source,
-    emptyStrategy: .collapse,
-    batchSize: 30,
-    stickyHeader: true,
-    forwardLoading: false
-) { day, records in
-    TimelineSection(records)
-}
+InfiniteDayScrollView(...)
+    .header { ... }
+    .emptyView { ... }
+    .gapView { ... }
+    .loadingView { ... }
+
+InfiniteDateScrollView(...)
+    .header { ... }
+    .loadingView { ... }
+    .errorView { ... }
+    .emptyView { ... }
+
+InfiniteScrollView(...)
+    .emptyView { ... }
+    .loadingView { ... }
+    .errorView { ... }
+    .footerView { ... }
 ```
 
-## 自定义修饰符
-
-```swift
-InfiniteDayScrollView(source: source) { day, records in
-    RecordList(records)
-}
-.dayHeader { day in
-    MyCustomHeader(day)            // 自定义日期头
-}
-.emptyDayView {
-    EmptyDayPlaceholder()          // 自定义空日
-}
-.gapView { gap in
-    GapCard(gap)                   // 自定义折叠区间
-}
-.loadingView {
-    SkeletonView()                 // 自定义加载视图
-}
-```
-
-## 日期定位
-
-通过 `@Environment(\.dayScrollProxy)` 取得代理：
-
-```swift
-struct Toolbar: View {
-    @Environment(\.dayScrollProxy) private var proxy
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        Button("回到今天") {
-            // reduceMotion 时禁用动画
-            proxy?.scrollToToday(animated: !reduceMotion)
-        }
-        Button("跳转到本月") {
-            proxy?.scrollToMonth(Date())
-        }
-    }
-}
-```
-
-## 空日策略
-
-```swift
-public enum EmptyStrategy {
-    case showAll     // 显示所有日期（包括空）
-    case hideEmpty   // 隐藏空日
-    case collapse    // 折叠连续空日为单个 GapRange（推荐）
-}
-```
-
-## DataSource 协议
-
-```swift
-public protocol DayDataSource: Sendable {
-    associatedtype Item: Sendable & Identifiable
-    func items(on day: Date) async throws -> [Item]
-}
-```
-
-内置实现：
-- `StaticDayDataSource<Item>`：内存数据源（测试 / Demo）
-- `AnyDayDataSource<Item>`：类型擦除盒
-
-## API 速查
-
-| 类型 | 用途 |
-|------|------|
-| `InfiniteDayScrollView` | 主组件 |
-| `DayDataSource` / `AnyDayDataSource` / `StaticDayDataSource` | 数据源 |
-| `EmptyStrategy` | 空日策略 |
-| `DayRange` | 日期范围描述符（基础版用） |
-| `DayScrollProxy` | 日期定位代理 |
-| `InfiniteScrollConfig` | 完整版配置 |
-| `GapRange` | 折叠区间模型 |
-| `DayKey` | 日期标识（基于 UTC） |
-
-## 文档
-
-- [快速入门](docs/03_GUIDES/quick-start.md)
-- [架构设计](docs/02_ARCHITECTURE.md)
-- [API 参考](docs/01_API_REFERENCE.md)
-- [更新日志](docs/04_CHANGELOG.md)
+修饰符不再放在 `extension View` 上，避免跨模块同名歧义。
 
 ## 平台支持
 
 - iOS 17+
 - macOS 15+
+- Swift 6 严格并发安全
+
+## 文档
+
+- [项目背景](docs/00_CONTEXT.md)
+- [API 参考](docs/01_API_REFERENCE.md)
+- [架构设计](docs/02_ARCHITECTURE.md)
+- [快速入门](docs/03_GUIDES/quick-start.md)
+- [更新日志](docs/04_CHANGELOG.md)
 
 ## License
 

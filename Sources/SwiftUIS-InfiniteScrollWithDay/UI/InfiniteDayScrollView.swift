@@ -30,10 +30,13 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     /// 外部传入的 proxy binding，onAppear 时写入，让父视图（如 toolbar）能调用跳转。
     private let scrollProxyBinding: Binding<DayScrollProxy?>?
 
+    /// 自定义能力 builder（由 modifier 设置）。`var` 让副本可修改以支持链式调用。
+    private var headerBuilder: DayHeaderViewBuilder?
+    private var emptyBuilder: DayEmptyViewBuilder?
+    private var gapBuilder: DayGapViewBuilder?
+    private var loadingBuilder: DayLoadingViewBuilder?
+
     /// 基础版：按 DayRange 迭代，无数据源。
-    ///
-    /// 内部用空数据源走完整管线，避免重复实现。
-    /// batchSize 取 range 天数，emptyStrategy 固定 `.showAll`（既然无数据，空日就是常态）。
     public init(
         range: DayRange,
         scrollProxy: Binding<DayScrollProxy?>? = nil,
@@ -49,11 +52,13 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         self._controller = State(initialValue: controller)
         self.content = { day, _ in content(day) }
         self.scrollProxyBinding = scrollProxy
+        self.headerBuilder = nil
+        self.emptyBuilder = nil
+        self.gapBuilder = nil
+        self.loadingBuilder = nil
     }
 
     /// 数据驱动版（默认配置）。
-    ///
-    /// 默认：anchor=今天、batchSize=30、collapse、stickyHeader、不向前加载。
     public init<Data: DayDataSource>(
         source: Data,
         anchor: Date = Date(),
@@ -85,11 +90,13 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         self._controller = State(initialValue: controller)
         self.content = content
         self.scrollProxyBinding = scrollProxy
+        self.headerBuilder = nil
+        self.emptyBuilder = nil
+        self.gapBuilder = nil
+        self.loadingBuilder = nil
     }
 
     /// 完整版（PRD 风格，参数扁平化）。
-    ///
-    /// 等价于 `init(source:anchor:config:content:)` + `InfiniteScrollConfig(emptyStrategy:batchSize:stickyHeader:forwardLoading:)`。
     public init<Data: DayDataSource>(
         source: Data,
         emptyStrategy: EmptyStrategy = .collapse,
@@ -115,21 +122,15 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     }
 
     /// 当前滚动位置（绑定到 ScrollView）。
-    ///
-    /// Controller 通过 `scrollCommand` 发起跳转；此处监听命令并写入 scrollPosition，
-    /// SwiftUI 自动处理「先渲染目标 day 再滚动」（避免 LazyVStack 未渲染导致 scrollTo 静默失效）。
     @State private var scrollPosition: DayKey?
 
     public var body: some View {
         ScrollView {
-            // pinnedViews 类型是 SwiftUI 内部 PinnedScrollViews，
-            // 直接 inline 三元运算符让编译器推断，不显式声明类型名。
             LazyVStack(
                 alignment: .leading,
                 spacing: 0,
                 pinnedViews: controller.config.stickyHeader ? [.sectionHeaders] : []
             ) {
-                // 顶部哨兵（仅 forwardLoading）
                 if controller.config.forwardLoading {
                     Color.clear
                         .frame(height: 1)
@@ -141,8 +142,6 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
                     sectionItemView(item)
                 }
 
-                // 底部哨兵：高度保持 1pt，依赖 LazyVStack 默认的视口外预渲染触发 onAppear。
-                // 之前用 200pt 会让哨兵本身占空间，在内容稀疏时持续可见，导致循环触发。
                 Color.clear
                     .frame(height: 1)
                     .id(ScrollAnchors.bottom)
@@ -161,11 +160,13 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
             }
         }
         .onAppear {
-            // 把 proxy 写入外部 binding，让父视图（toolbar 等）能调用跳转。
-            // .environment 只向下传递，父视图读不到。
             scrollProxyBinding?.wrappedValue = DayScrollProxy(controller)
             controller.bootstrap()
         }
+        .environment(\.dayHeaderView, headerBuilder ?? .default)
+        .environment(\.dayEmptyView, emptyBuilder ?? .default)
+        .environment(\.dayGapView, gapBuilder ?? .default)
+        .environment(\.dayLoadingView, loadingBuilder ?? .default)
         .environment(\.dayScrollProxy, DayScrollProxy(controller))
     }
 
@@ -187,5 +188,49 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         case .loading:
             LoadingSection()
         }
+    }
+}
+
+// MARK: - 修饰符（返回同类型副本，支持链式调用）
+//
+// 参考 ScalingHeaderScrollView 的实现：modifier 创建 struct 副本，更新对应 builder，
+// 返回同类型。这样链式 `.header{}.emptyView{}.gapView{}` 不会断类型。
+
+public extension InfiniteDayScrollView {
+
+    /// 自定义日期头。闭包接收 `DayHeaderContext`（含日期、记录数、是否今天等）。
+    func header<H: View>(
+        @ViewBuilder _ builder: @escaping (DayHeaderContext) -> H
+    ) -> InfiniteDayScrollView<Item, Content> {
+        var copy = self
+        copy.headerBuilder = DayHeaderViewBuilder { context in AnyView(builder(context)) }
+        return copy
+    }
+
+    /// 自定义空日视图。
+    func emptyView<E: View>(
+        @ViewBuilder _ builder: @escaping () -> E
+    ) -> InfiniteDayScrollView<Item, Content> {
+        var copy = self
+        copy.emptyBuilder = DayEmptyViewBuilder { AnyView(builder()) }
+        return copy
+    }
+
+    /// 自定义折叠区间视图。
+    func gapView<G: View>(
+        @ViewBuilder _ builder: @escaping (GapRange) -> G
+    ) -> InfiniteDayScrollView<Item, Content> {
+        var copy = self
+        copy.gapBuilder = DayGapViewBuilder { gap in AnyView(builder(gap)) }
+        return copy
+    }
+
+    /// 自定义加载视图。
+    func loadingView<L: View>(
+        @ViewBuilder _ builder: @escaping () -> L
+    ) -> InfiniteDayScrollView<Item, Content> {
+        var copy = self
+        copy.loadingBuilder = DayLoadingViewBuilder { AnyView(builder()) }
+        return copy
     }
 }

@@ -1,115 +1,241 @@
 # 快速入门
 
+三个模块独立，按需选择对应章节。
+
 ## 安装
 
-在 Xcode 中：File → Add Package Dependencies，输入仓库 URL。
-
-或在 `Package.swift` 中：
+`Package.swift`：
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/hocgin/SwiftUIS-InfiniteScrollWithDay.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/hocgin/SwiftUIS-InfiniteScroll.git", .upToNextMajor(from: "2.0.0"))
+],
+
+targets: [
+    .target(name: "App", dependencies: [
+        .product(name: "SwiftUIS-InfiniteScroll", package: "SwiftUIS-InfiniteScroll"),
+        // 或 / 和：
+        .product(name: "SwiftUIS-InfiniteScrollWithDate", package: "SwiftUIS-InfiniteScroll"),
+        .product(name: "SwiftUIS-InfiniteScrollWithDay", package: "SwiftUIS-InfiniteScroll"),
+    ])
 ]
 ```
 
-## 第一个例子
+> Swift 模块名连字符在 import 时变为下划线：
+> - `SwiftUIS-InfiniteScroll` → `import SwiftUIS_InfiniteScroll`
+> - `SwiftUIS-InfiniteScrollWithDate` → `import SwiftUIS_InfiniteScrollWithDate`
+> - `SwiftUIS-InfiniteScrollWithDay` → `import SwiftUIS_InfiniteScrollWithDay`
 
-### 1. 基础版（5 分钟上手）
+---
 
-适合：纯按日期迭代，不需要异步数据。
+# 一、SwiftUIS-InfiniteScroll
+
+## 1. 实现 Loader
 
 ```swift
-import SwiftUI
-import SwiftIS_InfiniteScrollWithDay
+import SwiftUIS_InfiniteScroll
 
-struct TimelineView: View {
+struct Post: Sendable, Identifiable {
+    let id: String
+    let title: String
+}
+
+struct PostLoader: InfiniteLoader {
+    func load(nextId: String?) async throws -> Page<Post> {
+        let (records, cursor) = try await API.fetchPosts(after: nextId)
+        return Page(records: records, nextId: cursor)
+    }
+}
+```
+
+## 2. 渲染
+
+```swift
+struct FeedView: View {
     var body: some View {
-        InfiniteDayScrollView(range: .past(days: 90)) { day in
-            VStack(alignment: .leading) {
-                Text("Day: \(day.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.headline)
-                Text("Your content here")
-                    .foregroundStyle(.secondary)
+        InfiniteScrollView(loader: PostLoader()) { post in
+            Text(post.title)
+                .padding()
+        }
+        .emptyView {
+            ContentUnavailableView("暂无内容", systemImage: "tray")
+        }
+        .loadingView {
+            ProgressView().frame(maxWidth: .infinity).padding()
+        }
+        .errorView { error, retry in
+            VStack {
+                Text(error.localizedDescription)
+                Button("重试", action: retry)
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .footerView { state, retry in
+            FooterView(state: state, retry: retry)
         }
     }
 }
 ```
 
-运行后即可看到过去 90 天的列表，日期头吸顶。
+## 3. 自定义预加载策略
 
-### 2. 数据驱动版（推荐生产用法）
+```swift
+InfiniteScrollView(loader: loader, preloadStrategy: .ratio(0.8)) { post in
+    PostCard(post)
+}
+```
 
-定义你的数据模型和数据源：
+## 4. 下拉刷新
+
+默认关闭。需要时显式附加：
+
+```swift
+InfiniteScrollView(loader: loader) { ... }
+    .refreshable { await store.reloadAsync() }
+```
+
+（用 store 形式的 init 时刷新更自然：`store: store`，然后 `await store.reloadAsync()`）
+
+---
+
+# 二、SwiftUIS-InfiniteScrollWithDate
+
+## 1. 实现 Loader + Item
+
+```swift
+import SwiftUIS_InfiniteScrollWithDate
+
+struct Event: TimelineItem {
+    let id: String
+    let date: Date
+    let title: String
+}
+
+struct EventLoader: TimelineLoader {
+    func loadPage(nextId: String?) async throws -> Page<Event> {
+        let (events, cursor) = try await API.fetchEvents(after: nextId)
+        return Page(records: events, nextId: cursor)
+    }
+}
+```
+
+## 2. 渲染（按月分组）
+
+```swift
+struct TimelineView: View {
+    var body: some View {
+        InfiniteDateScrollView(loader: EventLoader(), grouping: .month) { event in
+            Text(event.title)
+                .padding()
+        }
+        .header { date, grouping in
+            MonthHeader(date: date)
+        }
+        .errorView { error, retry in
+            ErrorView(error: error, retry: retry)
+        }
+    }
+}
+```
+
+切换粒度：把 `grouping: .month` 改为 `.day / .week / .year`。
+
+## 3. 跳转到指定日期
+
+```swift
+struct TimelineScreen: View {
+    @State private var proxy: InfiniteScrollProxy?
+
+    var body: some View {
+        NavigationStack {
+            InfiniteDateScrollView(
+                loader: EventLoader(),
+                grouping: .day,
+                scrollProxy: $proxy
+            ) { event in
+                EventRow(event)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("今天") { proxy?.scrollTo(Date()) }
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
+# 三、SwiftUIS-InfiniteScrollWithDay
+
+## 1. 基础版（无数据源）
+
+适合：纯迭代日期，不需要异步数据。
+
+```swift
+import SwiftUIS_InfiniteScrollWithDay
+
+struct CalendarStrip: View {
+    var body: some View {
+        InfiniteDayScrollView(range: .past(days: 90)) { day in
+            Text(day, format: .dateTime.month().day())
+                .padding()
+        }
+    }
+}
+```
+
+## 2. 数据驱动版
 
 ```swift
 struct Record: Sendable, Identifiable {
     let id = UUID()
-    let title: String
     let date: Date
+    let title: String
 }
 
 struct RecordDatabase: DayDataSource {
     func items(on day: Date) async throws -> [Record] {
-        // 替换为你的实际数据查询
-        try await fetchRecords(from: day)
+        try await DB.records(on: day)
     }
 }
-```
 
-使用：
-
-```swift
 struct TimelineView: View {
     var body: some View {
         InfiniteDayScrollView(source: RecordDatabase()) { day, records in
-            VStack(alignment: .leading) {
-                ForEach(records) { record in
-                    Text(record.title)
-                }
-            }
-            .padding()
+            ForEach(records) { Text($0.title).padding(.vertical, 2) }
         }
     }
 }
 ```
 
-默认配置：anchor=今天、batchSize=30、collapse 策略、stickyHeader、不向前加载。
+默认：anchor=今天、batchSize=30、collapse 策略、stickyHeader、不向前加载。
 
-### 3. 完整版 + 自定义
+## 3. 完整版 + 自定义
 
 ```swift
 InfiniteDayScrollView(
     source: source,
-    anchor: Date(),                       // 初始锚点（默认今天）
-    config: .init(
-        batchSize: 50,
-        emptyStrategy: .collapse,
-        stickyHeader: true,
-        forwardLoading: false
-    )
+    emptyStrategy: .collapse,
+    batchSize: 50,
+    stickyHeader: true,
+    forwardLoading: false
 ) { day, records in
-    RecordList(records)
+    ForEach(records) { RecordRow($0) }
 }
-.dayHeader { day in
+.header { ctx in
     HStack {
-        Text(day, format: .dateTime.month().day())
+        Text(ctx.date, format: .dateTime.month().day())
             .font(.headline)
         Spacer()
-        Text(day, format: .dateTime.weekday(.wide))
-            .font(.caption)
-            .foregroundStyle(.secondary)
+        Text("\(ctx.itemCount) 条")
+            .font(.caption).foregroundStyle(.secondary)
     }
     .padding()
     .background(.thinMaterial)
 }
-.emptyDayView {
-    ContentUnavailableView(
-        "无记录",
-        systemImage: "tray"
-    )
+.emptyView {
+    ContentUnavailableView("无记录", systemImage: "tray")
 }
 .gapView { gap in
     VStack {
@@ -119,42 +245,52 @@ InfiniteDayScrollView(
     .padding()
 }
 .loadingView {
-    ProgressView()
-        .frame(maxWidth: .infinity)
-        .padding()
+    ProgressView().frame(maxWidth: .infinity).padding()
 }
 ```
 
-## 日期定位
+## 4. 跳转
 
 ```swift
-struct TimelineToolbar: View {
-    @Environment(\.dayScrollProxy) private var proxy
+struct TimelineScreen: View {
+    @State private var proxy: DayScrollProxy?
 
     var body: some View {
-        HStack {
-            Button("回到今天") { proxy?.scrollToToday() }
-            Button("本月") { proxy?.scrollToMonth(Date()) }
-            Button("3 月前") {
-                proxy?.scrollTo(Date().addingTimeInterval(-90 * 86_400))
+        NavigationStack {
+            InfiniteDayScrollView(
+                source: RecordDatabase(),
+                scrollProxy: $proxy
+            ) { day, records in
+                ForEach(records) { RecordRow($0) }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("回到今天") { proxy?.scrollToToday() }
+                }
             }
         }
     }
 }
 ```
 
-把 `TimelineToolbar` 嵌套在 `InfiniteDayScrollView` 内（或通过 environment 传递），即可调用定位 API。
+`DayScrollProxy` API：
+- `scrollToToday(animated:)`
+- `scrollTo(_:anchor:animated:)`
+- `scrollToMonth(_:anchor:animated:)`
 
-## 三种空日策略对比
+## 5. 三种空日策略
 
 ```swift
-.showAll    // 每天都显示，空日渲染 emptyDayView
+.showAll    // 每天都显示，空日渲染 emptyView
 .hideEmpty  // 完全跳过空日，列表更紧凑
-.collapse   // 连续 ≥ 2 个空日折叠为 GapRange，单空日保留（默认推荐）
+.collapse   // 连续 ≥ 2 空日折叠为 GapRange，单空日保留（推荐默认）
 ```
+
+---
 
 ## 下一步
 
-- 阅读 [API 参考](../01_API_REFERENCE.md) 了解所有类型
-- 阅读 [架构设计](../02_ARCHITECTURE.md) 了解内部机制
-- 查看 Demo App（`App/Sources/BootView.swift`）三个完整示例
+- [API 参考](../01_API_REFERENCE.md) — 完整类型签名
+- [架构设计](../02_ARCHITECTURE.md) — 内部机制
+- [项目背景](../00_CONTEXT.md) — 模块选择指南
+- Demo App（`App/Sources/BootView.swift`）— 三模块完整示例

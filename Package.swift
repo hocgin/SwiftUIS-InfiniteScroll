@@ -1,20 +1,27 @@
 // swift-tools-version: 6.0
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// The swift-tools-version declares the minimum version of Swift required to build the package.
 
 import PackageDescription
 
 let package = Package(
-    name: "SwiftUIS-InfiniteScrollWithDay",
+    name: "SwiftUIS-InfiniteScroll",
     defaultLocalization: "en",
     platforms: [
         .iOS(.v17),
         .macOS(.v15),
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "SwiftUIS-InfiniteScrollWithDay",
             targets: ["SwiftUIS-InfiniteScrollWithDay"]
+        ),
+        .library(
+            name: "SwiftUIS-InfiniteScrollWithDate",
+            targets: ["SwiftUIS-InfiniteScrollWithDate"]
+        ),
+        .library(
+            name: "SwiftUIS-InfiniteScroll",
+            targets: ["SwiftUIS-InfiniteScroll"]
         ),
     ],
     dependencies: [
@@ -36,6 +43,38 @@ let package = Package(
         .testTarget(
             name: "SwiftUIS-InfiniteScrollWithDayTests",
             dependencies: ["SwiftUIS-InfiniteScrollWithDay"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        .target(
+            name: "SwiftUIS-InfiniteScrollWithDate",
+            dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        .testTarget(
+            name: "SwiftUIS-InfiniteScrollWithDateTests",
+            dependencies: ["SwiftUIS-InfiniteScrollWithDate"],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        .target(
+            name: "SwiftUIS-InfiniteScroll",
+            dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v6),
+            ]
+        ),
+        .testTarget(
+            name: "SwiftUIS-InfiniteScrollTests",
+            dependencies: ["SwiftUIS-InfiniteScroll"],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
             ]

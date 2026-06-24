@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftUIS_InfiniteScrollWithDay
+import SwiftUIS_InfiniteScrollWithDate
+import SwiftUIS_InfiniteScroll
 
 struct BootView: View {
     var body: some View {
@@ -17,6 +19,16 @@ struct BootView: View {
             FullDemoView()
                 .tabItem {
                     Label("完整", systemImage: "rectangle.stack")
+                }
+
+            TimelineDemoView()
+                .tabItem {
+                    Label("时间轴", systemImage: "clock.arrow.circlepath")
+                }
+
+            FeedDemoView()
+                .tabItem {
+                    Label("Feed", systemImage: "list.bullet")
                 }
         }
     }
@@ -85,7 +97,7 @@ struct DataDrivenDemoView: View {
                     }
                 }
             }
-            .emptyDayView {
+            .emptyView {
                 Text("（当天无记录）")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -116,7 +128,7 @@ struct DataDrivenDemoView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 6)
             }
-            .dayHeader { ctx in
+            .header { ctx in
                 HStack(spacing: 8) {
                     // 日期数字大字
                     Text(ctx.date, format: .dateTime.day())
@@ -222,6 +234,100 @@ struct FullDemoView: View {
 private struct Record: Sendable, Identifiable {
     let id = UUID()
     let title: String
+}
+
+// MARK: - 时间轴模块 Demo（SwiftUIS-InfiniteScroll）
+
+/// 演示基于游标分页的无限滚动时间轴。
+struct TimelineDemoView: View {
+
+    /// 通过 binding 拿到 proxy，供 toolbar 调用跳转。
+    @State private var scrollProxy: InfiniteScrollProxy?
+
+    var body: some View {
+        NavigationStack {
+            InfiniteDateScrollView(
+                loader: MockTimelineLoader(),
+                grouping: .week,
+                showEmptyDays: false,
+                preloadThreshold: 5,
+                scrollProxy: $scrollProxy
+            ) { item in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.body)
+                    Text(item.date, format: .dateTime.hour().minute().second())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color.accentColor.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+            }
+            .header { date, _ in
+                HStack {
+                    Text(date, format: .dateTime.month().day())
+                        .font(.headline)
+                    Spacer()
+                    Text(date, format: .dateTime.weekday(.wide))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.thinMaterial)
+            }
+            .errorView { _, retry in
+                VStack(spacing: 8) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.title)
+                    Text("网络错误，请重试")
+                    Button("重试", action: retry)
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+            .navigationTitle("时间轴 Demo")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("跳到 7 天前") {
+                        scrollProxy?.scrollTo(Date().addingTimeInterval(-7 * 86_400))
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 通用 Feed Demo（SwiftUIS-InfiniteScroll 模块）
+
+/// 演示通用无限滚动列表：游标分页 + 预加载 + 下拉刷新 + 错误恢复。
+struct FeedDemoView: View {
+    var body: some View {
+        NavigationStack {
+            InfiniteScrollView(
+                loader: MockFeedLoader(),
+                preloadStrategy: .fixed(5)
+            ) { item in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.body)
+                    Text(item.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.secondary.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal)
+                .padding(.vertical, 4)
+            }
+            .navigationTitle("Feed Demo")
+        }
+    }
 }
 
 #Preview {

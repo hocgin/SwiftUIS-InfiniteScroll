@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		57D87C9E2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDay in Frameworks */ = {isa = PBXBuildFile; productRef = 57D87C9D2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDay */; };
+		57D87CAA2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDate in Frameworks */ = {isa = PBXBuildFile; productRef = 57D87CAB2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDate */; };
+		57D87CAC2E05268C00A2A672 /* SwiftUIS-InfiniteScroll in Frameworks */ = {isa = PBXBuildFile; productRef = 57D87CAD2E05268C00A2A672 /* SwiftUIS-InfiniteScroll */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				57D87C9E2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDay in Frameworks */,
+				57D87CAA2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDate in Frameworks */,
+				57D87CAC2E05268C00A2A672 /* SwiftUIS-InfiniteScroll in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +130,8 @@
 			name = App;
 			packageProductDependencies = (
 				57D87C9D2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDay */,
+				57D87CAB2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDate */,
+				57D87CAD2E05268C00A2A672 /* SwiftUIS-InfiniteScroll */,
 			);
 			productName = Example;
 			productReference = D99B79E32CA4E2B30010B87C /* SwiftUIS-InfiniteScrollWithDayApp.app */;
@@ -605,6 +611,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D99B7A1F2CA4E49A0010B87C /* XCLocalSwiftPackageReference "../../SwiftUIS-InfiniteScrollWithDay" */;
 			productName = "SwiftUIS-InfiniteScrollWithDay";
+		};
+		57D87CAB2E05268C00A2A672 /* SwiftUIS-InfiniteScrollWithDate */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D99B7A1F2CA4E49A0010B87C /* XCLocalSwiftPackageReference "../../SwiftUIS-InfiniteScrollWithDay" */;
+			productName = "SwiftUIS-InfiniteScrollWithDate";
+		};
+		57D87CAD2E05268C00A2A672 /* SwiftUIS-InfiniteScroll */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D99B7A1F2CA4E49A0010B87C /* XCLocalSwiftPackageReference "../../SwiftUIS-InfiniteScrollWithDay" */;
+			productName = "SwiftUIS-InfiniteScroll";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

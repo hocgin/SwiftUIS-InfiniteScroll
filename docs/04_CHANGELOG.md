@@ -1,8 +1,100 @@
 # 更新日志
 
+## v2.0.0 - 2026-06-25
+
+### 重大变更
+
+仓库重命名为 `SwiftUIS-InfiniteScroll`，组织为三个互不依赖的 SwiftPM target。
+
+#### 新增模块：`SwiftUIS-InfiniteScroll`
+
+通用游标分页列表，无业务模型耦合。
+
+- `InfiniteScrollView<Item, Content>` 主组件（2 个 init：loader / store）
+- `InfiniteLoader` 协议 + `AnyInfiniteLoader` + `load(nextId:) -> Page<Item>`
+- `InfiniteStore<Item>`（@MainActor @Observable）：双状态分离
+  - `state`：首次加载状态（idle / loading / loaded / empty / failed）
+  - `footerState`：底部分页状态（none / loading / failed / noMore）
+- `PreloadStrategy`：`.fixed(N)` / `.ratio(0.8)`，默认 `.fixed(5)`
+- 默认视图：`InfiniteListEmptyView` / `InfiniteListLoadingView` / `InfiniteListErrorView` / `InfiniteListFooterView`
+- 修饰符：`.emptyView` / `.loadingView` / `.errorView` / `.footerView`
+- **下拉刷新默认关闭**：按需附加 `.refreshable { await store.reloadAsync() }`
+- 设计：分页失败不丢数据，footer 显示重试按钮
+
+#### 新增模块：`SwiftUIS-InfiniteScrollWithDate`
+
+按 day / week / month / year 自动分组的时间轴；游标分页驱动。
+
+- `InfiniteDateScrollView<Item, Content>` 主组件（2 个 init：完整版 / PRD 扁平化）
+- `TimelineLoader` 协议 + `AnyTimelineLoader` + `loadPage(nextId:) -> Page<Item>`
+- `TimelineItem` 协议：`id: String` + `date: Date`
+- `TimelineGrouping`：`day / week / month / year`（默认 day）
+- `TimelineConfig`：grouping / showEmptyDays / preloadThreshold / restoreScrollPosition
+- `TimelineEngine<Item>`（@MainActor @Observable）：状态机
+- `InfiniteScrollProxy`：`scrollTo(date)` 跳转
+- `scrollProxy: Binding<InfiniteScrollProxy?>?`：暴露给父视图（toolbar）
+- 修饰符：`.header` / `.loadingView` / `.errorView` / `.emptyView`
+
+#### `SwiftUIS-InfiniteScrollWithDay`（原 v1.0 模块，本次保留）
+
+按天分组的日记 / 时间记录。
+
+- API 保持兼容
+- 修饰符名变更（见下）
+
+#### 修饰符重构（影响全部三个模块）
+
+- **breaking**：从 `extension View` 改为限定到具体主组件
+  - 旧：`extension View { func dayHeader(...) -> some View }`
+  - 新：`extension InfiniteDayScrollView { func header(...) -> InfiniteDayScrollView<Item, Content> }`
+- **breaking**：删除前缀（`dayHeader` → `header`，`emptyDayView` → `emptyView`）
+- **breaking**：删除别名（`listEmptyView` / `listLoadingView` / `listErrorView` / `listFooterView`）
+- 采用「值类型副本」模式（参考 ScalingHeaderScrollView）：`var copy = self; copy.xxxBuilder = ...; return copy`，保持链式调用类型一致
+- 解决问题：跨模块同名 modifier 在 import 后产生歧义
+
+### 迁移指南（v1 → v2）
+
+```swift
+// v1
+InfiniteDayScrollView(source: src) { ... }
+    .dayHeader { Header($0) }
+    .emptyDayView { EmptyView() }
+    .gapView { GapView($0) }
+
+// v2
+InfiniteDayScrollView(source: src) { ... }
+    .header { ctx in Header(ctx) }      // 入参改 DayHeaderContext
+    .emptyView { EmptyView() }
+    .gapView { GapView($0) }
+```
+
+### 性能
+
+- LazyVStack + onAppear 哨兵触发增量加载
+- 三个模块的状态机均 `@MainActor @Observable`
+- 跳转用 iOS 17+ `scrollPosition(id:)` 双向绑定（替代失效的 `ScrollViewReader.scrollTo`）
+
+### 平台
+
+- iOS 17+
+- macOS 15+
+- Swift 6 严格并发安全
+
+### 测试
+
+- 63 个单元测试覆盖三模块核心逻辑
+  - `DayKey` / `Calendar+DayOps` / `DayRange` / `GapRange`
+  - `CollapseAggregator` 三策略
+  - `StaticDayDataSource` / `AnyDayDataSource`
+  - `InfiniteScrollController` bootstrap / loadMorePast / loadMoreFuture / retry
+  - `InfiniteStore` bootstrap / loadMore / preload / retry / 分页失败不丢数据
+  - `TimelineEngine` bootstrap / loadNextPage / preloadThreshold / retry / showEmptyDays
+
+---
+
 ## v1.0.0 - 2026-06-24
 
-### 新增
+### 初始版本（仅 `SwiftUIS-InfiniteScrollWithDay`）
 
 - 核心：`InfiniteDayScrollView<Item, Content>` 主组件
   - 基础版 init：`InfiniteDayScrollView(range:) { day in ... }`
@@ -15,7 +107,7 @@
 - 视图：`DaySection` / `GapSection` / `LoadingSection` / `DayHeader` / `EmptyDayView`
 - 工具：`DayKey`（UTC 基） / `DayRange` / `GapRange` / `Calendar+DayOps`
 - 定位：`DayScrollProxy`（scrollToToday / scrollTo / scrollToMonth）
-- 修饰符：`.dayHeader` / `.emptyDayView` / `.gapView` / `.loadingView`
+- 修饰符（旧名）：`.dayHeader` / `.emptyDayView` / `.gapView` / `.loadingView`
 
 ### 性能
 
