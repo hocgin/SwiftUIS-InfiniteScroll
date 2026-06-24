@@ -15,7 +15,7 @@ import SwiftUI
 
 /// 日期头 builder。`nil` 走默认 `DayHeader`。
 public struct DayHeaderViewBuilder: @unchecked Sendable {
-    public let builder: ((Date) -> AnyView)?
+    public let builder: ((DayHeaderContext) -> AnyView)?
 
     public static let `default` = DayHeaderViewBuilder(builder: nil)
 }
@@ -92,10 +92,21 @@ public extension View {
 
     /// 自定义日期头。
     ///
-    /// 例：`.dayHeader { date in Text(date, style: .date).font(.headline) }`
-    func dayHeader<H: View>(@ViewBuilder _ builder: @escaping (Date) -> H) -> some View {
-        environment(\.dayHeaderView, DayHeaderViewBuilder { date in
-            AnyView(builder(date))
+    /// 闭包接收 `DayHeaderContext`，包含日期、记录数、是否今天等。
+    ///
+    /// 例：
+    /// ```swift
+    /// .dayHeader { ctx in
+    ///     HStack {
+    ///         Text(ctx.date, format: .dateTime.month().day())
+    ///         Spacer()
+    ///         if ctx.isToday { Text("今天").bold() }
+    ///     }
+    /// }
+    /// ```
+    func dayHeader<H: View>(@ViewBuilder _ builder: @escaping (DayHeaderContext) -> H) -> some View {
+        environment(\.dayHeaderView, DayHeaderViewBuilder { context in
+            AnyView(builder(context))
         })
     }
 

@@ -62,11 +62,26 @@ public struct DaySection<Item: Sendable & Identifiable, Content: View>: View {
 
     @ViewBuilder
     private var headerView: some View {
+        let context = DayHeaderContext(
+            date: model.day,
+            key: model.key,
+            itemCount: itemCount,
+            isToday: model.key == DayKey.today,
+            isEmpty: model.state.isEmpty
+        )
         if let builder = headerBuilder.builder {
-            builder(model.day)
+            builder(context)
         } else {
             DayHeader(date: model.day)
         }
+    }
+
+    /// 当天记录数（用于 header 展示）。
+    private var itemCount: Int {
+        if case .loaded(let items) = model.state {
+            return items.count
+        }
+        return 0
     }
 
     @ViewBuilder

@@ -92,6 +92,65 @@ struct DataDrivenDemoView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
             }
+            .gapView { gap in
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.title3)
+                        .foregroundStyle(.tint)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(gap.count) 天空档")
+                            .font(.subheadline.bold())
+                        Text("\(gap.start.referenceDate, format: .dateTime.month(.abbreviated).day()) – \(gap.end.referenceDate, format: .dateTime.month(.abbreviated).day())")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("点击展开")
+                        .font(.caption2)
+                        .foregroundStyle(.tint)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color.accentColor.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
+                .padding(.vertical, 6)
+            }
+            .dayHeader { ctx in
+                HStack(spacing: 8) {
+                    // 日期数字大字
+                    Text(ctx.date, format: .dateTime.day())
+                        .font(.system(size: 28, weight: .bold))
+                        .frame(width: 44, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(ctx.date, format: .dateTime.month(.abbreviated).year())
+                                .font(.subheadline)
+                            if ctx.isToday {
+                                Text("今天")
+                                    .font(.caption2)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentColor, in: Capsule())
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        if ctx.itemCount > 0 {
+                            Text("\(ctx.itemCount) 条记录")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else if ctx.isEmpty {
+                            Text("无记录")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.thinMaterial)
+            }
             .navigationTitle("数据驱动 Demo")
         }
     }
