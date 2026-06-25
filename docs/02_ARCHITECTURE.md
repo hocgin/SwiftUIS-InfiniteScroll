@@ -49,7 +49,7 @@ Sources/
 ```
 开发者侧                          body 渲染层
 ─────────                         ─────────────
-.header { ... }                   if let builder = headerBuilder?.builder {
+.dateHeaderView { ... }           if let builder = headerBuilder?.builder {
    │                                  builder()
    ▼                              } else {
 var copy = self                       默认视图()

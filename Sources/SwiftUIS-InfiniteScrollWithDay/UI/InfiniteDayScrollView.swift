@@ -36,6 +36,9 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     private var gapBuilder: DayGapViewBuilder?
     private var loadingBuilder: DayLoadingViewBuilder?
 
+    /// ScrollView 顶部整体 header 视图工厂（由 `.headerView {}` 设置）。`nil` 不渲染。
+    private var headerViewBuilder: (() -> AnyView)?
+
     /// 基础版：按 DayRange 迭代，无数据源。
     public init(
         range: DayRange,
@@ -56,6 +59,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         self.emptyBuilder = nil
         self.gapBuilder = nil
         self.loadingBuilder = nil
+        self.headerViewBuilder = nil
     }
 
     /// 数据驱动版（默认配置）。
@@ -94,6 +98,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         self.emptyBuilder = nil
         self.gapBuilder = nil
         self.loadingBuilder = nil
+        self.headerViewBuilder = nil
     }
 
     /// 完整版（PRD 风格，参数扁平化）。
@@ -131,6 +136,9 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
                 spacing: 0,
                 pinnedViews: controller.config.stickyHeader ? [.sectionHeaders] : []
             ) {
+                if let headerViewBuilder {
+                    headerViewBuilder()
+                }
                 if controller.config.forwardLoading {
                     Color.clear
                         .frame(height: 1)
@@ -194,12 +202,12 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
 // MARK: - 修饰符（返回同类型副本，支持链式调用）
 //
 // 参考 ScalingHeaderScrollView 的实现：modifier 创建 struct 副本，更新对应 builder，
-// 返回同类型。这样链式 `.header{}.emptyView{}.gapView{}` 不会断类型。
+// 返回同类型。这样链式 `.dateHeaderView{}.emptyView{}.gapView{}` 不会断类型。
 
 public extension InfiniteDayScrollView {
 
     /// 自定义日期头。闭包接收 `DayHeaderContext`（含日期、记录数、是否今天等）。
-    func header<H: View>(
+    func dateHeaderView<H: View>(
         @ViewBuilder _ builder: @escaping (DayHeaderContext) -> H
     ) -> InfiniteDayScrollView<Item, Content> {
         var copy = self
@@ -231,6 +239,16 @@ public extension InfiniteDayScrollView {
     ) -> InfiniteDayScrollView<Item, Content> {
         var copy = self
         copy.loadingBuilder = DayLoadingViewBuilder { AnyView(builder()) }
+        return copy
+    }
+
+    /// 在 ScrollView 内容顶部添加整体 header 视图（随内容滚动，非固定吸顶）。
+    /// 与 `.dateHeaderView`（每个日期头）不同：它是整个内容顶部的单一视图。
+    func headerView<H: View>(
+        @ViewBuilder _ builder: @escaping () -> H
+    ) -> InfiniteDayScrollView<Item, Content> {
+        var copy = self
+        copy.headerViewBuilder = { AnyView(builder()) }
         return copy
     }
 }

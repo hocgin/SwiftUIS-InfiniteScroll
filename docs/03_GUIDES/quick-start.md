@@ -127,7 +127,7 @@ struct TimelineView: View {
             Text(event.title)
                 .padding()
         }
-        .header { date, grouping in
+        .dateHeaderView { date, grouping in
             MonthHeader(date: date)
         }
         .errorView { error, retry in
@@ -223,7 +223,7 @@ InfiniteDayScrollView(
 ) { day, records in
     ForEach(records) { RecordRow($0) }
 }
-.header { ctx in
+.dateHeaderView { ctx in
     HStack {
         Text(ctx.date, format: .dateTime.month().day())
             .font(.headline)

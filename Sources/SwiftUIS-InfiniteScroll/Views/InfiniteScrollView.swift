@@ -38,6 +38,9 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
     private var errorBuilder: ErrorViewBuilder?
     private var footerBuilder: FooterBuilder?
 
+    /// ScrollView 顶部整体 header 视图工厂（由 `.headerView {}` 设置）。`nil` 不渲染。
+    private var headerViewBuilder: (() -> AnyView)?
+
     /// 当前滚动位置（绑定到 ScrollView）。
     @State private var scrollPosition: Item.ID?
 
@@ -55,6 +58,7 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
         self.loadingBuilder = nil
         self.errorBuilder = nil
         self.footerBuilder = nil
+        self.headerViewBuilder = nil
     }
 
     /// 直接传入 store（多个视图共享同一 store 时用）。
@@ -70,11 +74,15 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
         self.loadingBuilder = nil
         self.errorBuilder = nil
         self.footerBuilder = nil
+        self.headerViewBuilder = nil
     }
 
     public var body: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
+                if let headerViewBuilder {
+                    headerViewBuilder()
+                }
                 if store.items.isEmpty {
                     // 首次加载 / 空 / 错误：在列表内展示全屏状态。
                     firstScreenState
@@ -193,6 +201,16 @@ public extension InfiniteScrollView {
     ) -> InfiniteScrollView<Item, Content> {
         var copy = self
         copy.footerBuilder = FooterBuilder { state, retry in AnyView(builder(state, retry)) }
+        return copy
+    }
+
+    /// 在 ScrollView 内容顶部添加整体 header 视图（随内容滚动，非固定吸顶）。
+    /// 与 `.emptyView` / `.loadingView` 不同：它是常驻顶部的单一视图，不参与空/加载状态切换。
+    func headerView<H: View>(
+        @ViewBuilder _ builder: @escaping () -> H
+    ) -> InfiniteScrollView<Item, Content> {
+        var copy = self
+        copy.headerViewBuilder = { AnyView(builder()) }
         return copy
     }
 }

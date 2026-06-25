@@ -89,7 +89,7 @@ struct EventLoader: TimelineLoader {
 InfiniteDateScrollView(loader: EventLoader(), grouping: .month) { event in
     Text(event.title)
 }
-.header { date, grouping in MonthHeader(date: date, grouping: grouping) }
+.dateHeaderView { date, grouping in MonthHeader(date: date, grouping: grouping) }
 .errorView { error, retry in ErrorView(error, retry: retry) }
 ```
 
@@ -117,7 +117,7 @@ struct RecordSource: DayDataSource {
 InfiniteDayScrollView(source: RecordSource(), emptyStrategy: .collapse) { day, records in
     ForEach(records) { Text($0.title) }
 }
-.header { ctx in DayHeader(context: ctx) }
+.dateHeaderView { ctx in DayHeader(context: ctx) }
 .gapView { gap in GapCard(gap) }
 ```
 
@@ -129,18 +129,21 @@ InfiniteDayScrollView(source: RecordSource(), emptyStrategy: .collapse) { day, r
 
 ```swift
 InfiniteDayScrollView(...)
-    .header { ... }
+    .headerView { ... }          // 整体顶部 header（随内容滚动）
+    .dateHeaderView { ... }      // 每个日期分组头
     .emptyView { ... }
     .gapView { ... }
     .loadingView { ... }
 
 InfiniteDateScrollView(...)
-    .header { ... }
+    .headerView { ... }          // 整体顶部 header（随内容滚动）
+    .dateHeaderView { ... }      // 每个分组日期头
     .loadingView { ... }
     .errorView { ... }
     .emptyView { ... }
 
 InfiniteScrollView(...)
+    .headerView { ... }          // 整体顶部 header（随内容滚动）
     .emptyView { ... }
     .loadingView { ... }
     .errorView { ... }

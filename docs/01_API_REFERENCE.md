@@ -32,6 +32,7 @@ public init(
 ### 修饰符（返回 `InfiniteScrollView<Item, Content>`）
 
 ```swift
+func headerView<H: View>(@ViewBuilder _ builder: @escaping () -> H) -> Self
 func emptyView<V: View>(@ViewBuilder _ builder: @escaping () -> V) -> Self
 func loadingView<L: View>(@ViewBuilder _ builder: @escaping () -> L) -> Self
 func errorView<E: View>(
@@ -154,7 +155,9 @@ public init<L: TimelineLoader>(
 ### 修饰符（返回 `InfiniteDateScrollView<Item, Content>`）
 
 ```swift
-func header<H: View>(
+func headerView<H: View>(@ViewBuilder _ builder: @escaping () -> H) -> Self
+
+func dateHeaderView<H: View>(
     @ViewBuilder _ builder: @escaping (Date, TimelineGrouping) -> H
 ) -> Self
 
@@ -278,7 +281,9 @@ public init<Data: DayDataSource>(
 ### 修饰符（返回 `InfiniteDayScrollView<Item, Content>`）
 
 ```swift
-func header<H: View>(
+func headerView<H: View>(@ViewBuilder _ builder: @escaping () -> H) -> Self
+
+func dateHeaderView<H: View>(
     @ViewBuilder _ builder: @escaping (DayHeaderContext) -> H
 ) -> Self
 
@@ -398,7 +403,7 @@ public struct GapRange: Hashable, Sendable, Identifiable {
 
 ## `DayHeaderContext`
 
-`InfiniteDayScrollView` 的 `.header {}` 闭包入参，包含日期、记录数、是否今天等元信息。
+`InfiniteDayScrollView` 的 `.dateHeaderView {}` 闭包入参，包含日期、记录数、是否今天等元信息。
 
 ## `PlaceholderItem`
 

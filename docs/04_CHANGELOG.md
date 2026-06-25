@@ -1,5 +1,34 @@
 # 更新日志
 
+## v2.2.0 - 2026-06-26
+
+### 新增
+
+#### 顶部整体 header 修饰符 `.headerView {}`
+
+三个主组件（`InfiniteScrollView` / `InfiniteDateScrollView` / `InfiniteDayScrollView`）均新增 `.headerView { }` 修饰符，用于在 `ScrollView` 内容顶部添加一个整体 header 视图。
+
+- 与 `.dateHeaderView`（每个日期/分组头，数量多个）不同：`.headerView` 是整个内容顶部的**单一**视图
+- 随内容一起滚动（非固定吸顶）；常驻显示，不参与空/加载状态切换
+- 沿用「值类型副本」模式：内部 `headerViewBuilder` 在主组件 body 直接渲染，不走 EnvironmentKey（无需传递给子视图）
+
+```swift
+InfiniteScrollView(loader: FeedLoader()) { item in FeedRow(item) }
+    .headerView { FeedListHeader() }
+```
+
+## v2.1.0 - 2026-06-25
+
+### 重大变更
+
+#### 日期头修饰符重命名
+
+- **breaking**：`InfiniteDateScrollView` 与 `InfiniteDayScrollView` 的日期头修饰符 `.header` 改名为 `.dateHeaderView`
+  - 旧：`.header { ctx in ... }`
+  - 新：`.dateHeaderView { ctx in ... }`
+  - 原因：`.header` 语义过宽，限定为 `.dateHeaderView` 后与 `.emptyView` / `.loadingView` 等修饰符命名风格统一，并避免跨模块同名歧义
+  - 内部存储属性 `headerBuilder` 命名保留不变
+
 ## v2.0.0 - 2026-06-25
 
 ### 重大变更

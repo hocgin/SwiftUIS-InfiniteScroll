@@ -128,7 +128,7 @@ struct DataDrivenDemoView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 6)
             }
-            .header { ctx in
+            .dateHeaderView { ctx in
                 HStack(spacing: 8) {
                     // 日期数字大字
                     Text(ctx.date, format: .dateTime.day())
@@ -267,7 +267,7 @@ struct TimelineDemoView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 4)
             }
-            .header { date, _ in
+            .dateHeaderView { date, _ in
                 HStack {
                     Text(date, format: .dateTime.month().day())
                         .font(.headline)
@@ -331,6 +331,19 @@ struct FeedDemoView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .padding(.horizontal)
                 .padding(.vertical, 4)
+            }
+            .headerView {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(.tint)
+                    Text("顶部 headerView（随列表滚动）")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color.accentColor.opacity(0.08))
             }
             .navigationTitle("Feed Demo")
             .toolbar {

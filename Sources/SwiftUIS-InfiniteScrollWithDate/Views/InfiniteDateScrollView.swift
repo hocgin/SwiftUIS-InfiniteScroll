@@ -19,7 +19,7 @@ import SwiftUI
 /// ) { item in
 ///     RecordCell(item)
 /// }
-/// .dateHeader { date, grouping in MyHeader(date) }
+/// .dateHeaderView { date, grouping in MyHeader(date) }
 /// .errorView { error, retry in ErrorView(error, retry) }
 /// ```
 public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
@@ -33,6 +33,9 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
     private var loadingBuilder: LoadingViewBuilder?
     private var errorBuilder: ErrorViewBuilder?
     private var emptyBuilder: EmptyViewBuilder?
+
+    /// ScrollView 顶部整体 header 视图工厂（由 `.headerView {}` 设置）。`nil` 不渲染。
+    private var headerViewBuilder: (() -> AnyView)?
 
     /// 滚动位置（按 section.date.timeIntervalSince1970）。
     @State private var scrollPosition: TimeInterval?
@@ -52,6 +55,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
         self.loadingBuilder = nil
         self.errorBuilder = nil
         self.emptyBuilder = nil
+        self.headerViewBuilder = nil
     }
 
     /// 便捷 init（PRD 风格，参数扁平化）。
@@ -80,6 +84,9 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
     public var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                if let headerViewBuilder {
+                    headerViewBuilder()
+                }
                 ForEach(engine.sections) { section in
                     TimelineSectionView(section: section, grouping: engine.config.grouping) { item in
                         content(item)
@@ -183,7 +190,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
 public extension InfiniteDateScrollView {
 
     /// 自定义日期头。接收 (date, grouping)。
-    func header<H: View>(
+    func dateHeaderView<H: View>(
         @ViewBuilder _ builder: @escaping (Date, TimelineGrouping) -> H
     ) -> InfiniteDateScrollView<Item, Content> {
         var copy = self
@@ -215,6 +222,16 @@ public extension InfiniteDateScrollView {
     ) -> InfiniteDateScrollView<Item, Content> {
         var copy = self
         copy.emptyBuilder = EmptyViewBuilder { AnyView(builder()) }
+        return copy
+    }
+
+    /// 在 ScrollView 内容顶部添加整体 header 视图（随内容滚动，非固定吸顶）。
+    /// 与 `.dateHeaderView`（每个分组日期头）不同：它是整个内容顶部的单一视图。
+    func headerView<H: View>(
+        @ViewBuilder _ builder: @escaping () -> H
+    ) -> InfiniteDateScrollView<Item, Content> {
+        var copy = self
+        copy.headerViewBuilder = { AnyView(builder()) }
         return copy
     }
 }

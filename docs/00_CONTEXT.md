@@ -50,7 +50,7 @@
 
 ### 共性
 
-- **值类型副本修饰符**：`.header {}` / `.emptyView {}` 等限定到具体主组件，返回同类型，链式调用不断类型。不再放在 `extension View` 上，避免跨模块同名歧义。
+- **值类型副本修饰符**：`.dateHeaderView {}` / `.emptyView {}` 等限定到具体主组件，返回同类型，链式调用不断类型。不再放在 `extension View` 上，避免跨模块同名歧义。
 - **EnvironmentKey 传递自定义能力**：避免主 `init` 参数爆炸。修饰符内部写私有 builder 字段，`body` 中应用 `.environment(key, builder ?? .default)`。
 - **@MainActor 状态机**：Controller / Engine / Store 都是 `@MainActor @Observable`，状态读写锁定主线程；Loader / DataSource 协议方法是非隔离 `async throws`，业务方可在任意 actor 实现。
 - **iOS 17+ `scrollPosition(id:)`**：用于跳转，避开 `ScrollViewReader.scrollTo` 在未渲染 LazyVStack 元素上失效的问题。
