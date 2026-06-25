@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// 抽象「可滚动到指定日期」的能力，供 `InfiniteScrollProxy` 持有而不泄漏 Item 泛型。
+/// 抽象「可滚动到指定日期」的能力，供 `InfiniteDateScrollViewInfiniteScrollProxy` 持有而不泄漏 Item 泛型。
 @MainActor
 public protocol InfiniteScrollable: AnyObject {
     /// 找到/计算目标 date 所属分组键，触发滚动。
@@ -12,7 +12,7 @@ public protocol InfiniteScrollable: AnyObject {
 ///
 /// 通过 `scrollProxy:` binding 参数从 `InfiniteDateScrollView` 取得（不用 @Environment，
 /// 因为父视图层级读不到子视图设置的 environment）。
-public struct InfiniteScrollProxy: @unchecked Sendable {
+public struct InfiniteDateScrollViewInfiniteScrollProxy: @unchecked Sendable {
 
     private let scrollable: any InfiniteScrollable
 

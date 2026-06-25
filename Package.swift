@@ -52,6 +52,9 @@ let package = Package(
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
             ],
+            resources: [
+                .process("Localizable.xcstrings")
+            ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),
             ]
@@ -67,6 +70,9 @@ let package = Package(
             name: "SwiftUIS-InfiniteScroll",
             dependencies: [
                 .product(name: "Logging", package: "swift-log"),
+            ],
+            resources: [
+                .process("Localizable.xcstrings")
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v6),

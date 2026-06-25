@@ -135,7 +135,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View
 public init<L: TimelineLoader>(
     loader: L,
     config: TimelineConfig = .init(),
-    scrollProxy: Binding<InfiniteScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Item) -> Content
 ) where L.Item == Item
 
@@ -146,7 +146,7 @@ public init<L: TimelineLoader>(
     showEmptyDays: Bool = false,
     preloadThreshold: Int = 5,
     restoreScrollPosition: Bool = false,
-    scrollProxy: Binding<InfiniteScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Item) -> Content
 ) where L.Item == Item
 ```
@@ -214,16 +214,16 @@ public struct TimelineConfig: Sendable, Equatable {
 
 同上（位于 `SwiftUIS-InfiniteScrollWithDate` 模块）。
 
-## `InfiniteScrollProxy`
+## `InfiniteDateScrollViewInfiniteScrollProxy`
 
 ```swift
-public struct InfiniteScrollProxy: @unchecked Sendable {
+public struct InfiniteDateScrollViewInfiniteScrollProxy: @unchecked Sendable {
     @MainActor public func scrollTo(_ date: Date)
 }
 ```
 
-通过 init 参数 `scrollProxy: Binding<InfiniteScrollProxy?>?` 取得：
-父视图（如 toolbar）声明 `@State private var proxy: InfiniteScrollProxy?` 传入，在 `.onAppear` 后即可调用 `proxy?.scrollTo(date)`。
+通过 init 参数 `scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>?` 取得：
+父视图（如 toolbar）声明 `@State private var proxy: InfiniteDateScrollViewInfiniteScrollProxy?` 传入，在 `.onAppear` 后即可调用 `proxy?.scrollTo(date)`。
 
 ---
 
@@ -241,7 +241,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
 // 1. 基础版（无数据源，仅按日迭代）
 public init(
     range: DayRange,
-    scrollProxy: Binding<DayScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Date) -> Content
 ) where Item == PlaceholderItem
 
@@ -249,7 +249,7 @@ public init(
 public init<Data: DayDataSource>(
     source: Data,
     anchor: Date = Date(),
-    scrollProxy: Binding<DayScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
 ) where Data.Item == Item
 
@@ -258,7 +258,7 @@ public init<Data: DayDataSource>(
     source: Data,
     anchor: Date = Date(),
     config: InfiniteScrollConfig,
-    scrollProxy: Binding<DayScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
 ) where Data.Item == Item
 
@@ -270,7 +270,7 @@ public init<Data: DayDataSource>(
     stickyHeader: Bool = true,
     forwardLoading: Bool = false,
     anchor: Date = Date(),
-    scrollProxy: Binding<DayScrollProxy?>? = nil,
+    scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
     @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
 ) where Data.Item == Item
 ```
@@ -346,10 +346,10 @@ public struct DayRange: Sendable, Hashable {
 }
 ```
 
-## `DayScrollProxy`
+## `InfiniteDayScrollViewInfiniteScrollProxy`
 
 ```swift
-public struct DayScrollProxy: @unchecked Sendable {
+public struct InfiniteDayScrollViewInfiniteScrollProxy: @unchecked Sendable {
     @MainActor public func scrollToToday(
         anchor: UnitPoint? = .top, animated: Bool = true
     )
@@ -364,7 +364,7 @@ public struct DayScrollProxy: @unchecked Sendable {
 }
 ```
 
-通过 init 参数 `scrollProxy: Binding<DayScrollProxy?>?` 暴露给父视图（推荐用法，覆盖 toolbar 场景）。
+通过 init 参数 `scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>?` 暴露给父视图（推荐用法，覆盖 toolbar 场景）。
 子视图仍可用 `@Environment(\.dayScrollProxy)`。
 
 ## `DayKey`

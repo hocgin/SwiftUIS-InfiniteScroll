@@ -143,7 +143,7 @@ struct TimelineView: View {
 
 ```swift
 struct TimelineScreen: View {
-    @State private var proxy: InfiniteScrollProxy?
+    @State private var proxy: InfiniteDateScrollViewInfiniteScrollProxy?
 
     var body: some View {
         NavigationStack {
@@ -253,7 +253,7 @@ InfiniteDayScrollView(
 
 ```swift
 struct TimelineScreen: View {
-    @State private var proxy: DayScrollProxy?
+    @State private var proxy: InfiniteDayScrollViewInfiniteScrollProxy?
 
     var body: some View {
         NavigationStack {
@@ -273,7 +273,7 @@ struct TimelineScreen: View {
 }
 ```
 
-`DayScrollProxy` API：
+`InfiniteDayScrollViewInfiniteScrollProxy` API：
 - `scrollToToday(animated:)`
 - `scrollTo(_:anchor:animated:)`
 - `scrollToMonth(_:anchor:animated:)`

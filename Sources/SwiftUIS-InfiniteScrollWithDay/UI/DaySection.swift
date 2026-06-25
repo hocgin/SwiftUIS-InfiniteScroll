@@ -115,7 +115,7 @@ public struct FailedRetryHint: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
-            Text("加载失败")
+            Text(L10n.Label.loadFailed)
                 .foregroundStyle(.secondary)
                 .font(.callout)
             Spacer()

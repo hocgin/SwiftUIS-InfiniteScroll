@@ -44,6 +44,7 @@
 - SwiftPM 多 target 包管理
 - SwiftUI（iOS 17+ / macOS 15+）
 - 第三方依赖：仅 `swift-log`
+- 国际化：String Catalog（`.xcstrings`），源语言为 `en`，同时提供 `zh-Hans` / `zh-Hant` 翻译；每模块通过 `L10n` 类型安全命名空间（`Label` / `Action` / `Message`）暴露文案
 
 ## 设计取舍
 
@@ -59,7 +60,7 @@
 
 - **InfiniteScrollView**：FooterState（`none / loading / failed / noMore`）独立于 InfiniteState（首次加载状态），让分页失败可视化和重试解耦。
 - **InfiniteDateScrollView**：`TimelineGrouping`（day/week/month/year）+ `showEmptyDays` 控制空分组；`TimelineItem` 协议要求 `id: String` + `date: Date`。
-- **InfiniteDayScrollView**：`EmptyStrategy`（`showAll / hideEmpty / collapse`）+ 双向加载（`forwardLoading`）；`DayKey` 基于 UTC 保证跨时区往返一致；`DayScrollProxy` 通过 `scrollProxy:` binding 暴露给父视图（如 toolbar）。
+- **InfiniteDayScrollView**：`EmptyStrategy`（`showAll / hideEmpty / collapse`）+ 双向加载（`forwardLoading`）；`DayKey` 基于 UTC 保证跨时区往返一致；`InfiniteDayScrollViewInfiniteScrollProxy` 通过 `scrollProxy:` binding 暴露给父视图（如 toolbar）。
 
 ## 选择指南
 

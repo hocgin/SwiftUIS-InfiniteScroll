@@ -18,7 +18,7 @@ public struct PlaceholderItem: Sendable, Identifiable {
 ///
 /// 修饰符：`.dayHeader {}` / `.emptyDayView {}` / `.gapView {}` / `.loadingView {}`
 ///
-/// 跳转代理（DayScrollProxy）有两种获取方式：
+/// 跳转代理（InfiniteDayScrollViewInfiniteScrollProxy）有两种获取方式：
 /// - **子视图**用 `@Environment(\.dayScrollProxy)`（自动注入）
 /// - **父视图**（如 NavigationStack 的 .toolbar）用 `scrollProxy:` binding 参数传入
 ///   原因：SwiftUI environment 单向向下，子视图设置的环境值父视图读不到。
@@ -28,7 +28,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     @ViewBuilder private let content: (Date, [Item]) -> Content
 
     /// 外部传入的 proxy binding，onAppear 时写入，让父视图（如 toolbar）能调用跳转。
-    private let scrollProxyBinding: Binding<DayScrollProxy?>?
+    private let scrollProxyBinding: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>?
 
     /// 自定义能力 builder（由 modifier 设置）。`var` 让副本可修改以支持链式调用。
     private var headerBuilder: DayHeaderViewBuilder?
@@ -39,7 +39,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     /// 基础版：按 DayRange 迭代，无数据源。
     public init(
         range: DayRange,
-        scrollProxy: Binding<DayScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Date) -> Content
     ) where Item == PlaceholderItem {
         let dayCount = max(1, range.end.days(from: range.start) + 1)
@@ -62,7 +62,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
     public init<Data: DayDataSource>(
         source: Data,
         anchor: Date = Date(),
-        scrollProxy: Binding<DayScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
     ) where Data.Item == Item {
         self.init(
@@ -79,7 +79,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         source: Data,
         anchor: Date = Date(),
         config: InfiniteScrollConfig,
-        scrollProxy: Binding<DayScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
     ) where Data.Item == Item {
         let controller = InfiniteScrollController<Item>(
@@ -104,7 +104,7 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
         stickyHeader: Bool = true,
         forwardLoading: Bool = false,
         anchor: Date = Date(),
-        scrollProxy: Binding<DayScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Date, [Data.Item]) -> Content
     ) where Data.Item == Item {
         self.init(
@@ -160,14 +160,14 @@ public struct InfiniteDayScrollView<Item: Sendable & Identifiable, Content: View
             }
         }
         .onAppear {
-            scrollProxyBinding?.wrappedValue = DayScrollProxy(controller)
+            scrollProxyBinding?.wrappedValue = InfiniteDayScrollViewInfiniteScrollProxy(controller)
             controller.bootstrap()
         }
         .environment(\.dayHeaderView, headerBuilder ?? .default)
         .environment(\.dayEmptyView, emptyBuilder ?? .default)
         .environment(\.dayGapView, gapBuilder ?? .default)
         .environment(\.dayLoadingView, loadingBuilder ?? .default)
-        .environment(\.dayScrollProxy, DayScrollProxy(controller))
+        .environment(\.dayScrollProxy, InfiniteDayScrollViewInfiniteScrollProxy(controller))
     }
 
     // MARK: - 私有

@@ -10,7 +10,7 @@ public struct InfiniteListEmptyView: View {
             Image(systemName: "tray")
                 .font(.system(size: 44))
                 .foregroundStyle(.secondary)
-            Text("暂无数据")
+            Text(L10n.Label.emptyData)
                 .font(.headline)
                 .foregroundStyle(.secondary)
         }

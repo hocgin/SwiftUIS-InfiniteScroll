@@ -11,7 +11,7 @@ public struct EmptyDayView: View {
         HStack(spacing: 8) {
             Image(systemName: "tray")
                 .foregroundStyle(.secondary)
-            Text("无记录")
+            Text(L10n.Label.emptyDay)
                 .foregroundStyle(.secondary)
                 .font(.callout)
             Spacer()

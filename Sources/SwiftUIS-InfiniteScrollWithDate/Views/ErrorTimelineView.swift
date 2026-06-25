@@ -14,9 +14,9 @@ public struct ErrorTimelineView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title)
                 .foregroundStyle(.orange)
-            Text("加载失败")
+            Text(L10n.Label.loadFailed)
                 .font(.headline)
-            Button("点击重试") { retry() }
+            Button(L10n.Action.retry) { retry() }
                 .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity)

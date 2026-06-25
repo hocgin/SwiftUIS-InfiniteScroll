@@ -176,7 +176,7 @@ struct FullDemoView: View {
     /// 通过 binding 从 InfiniteDayScrollView 拿到 proxy，供外部 toolbar 调用。
     /// 不用 @Environment(\.dayScrollProxy)：SwiftUI environment 单向向下，
     /// toolbar（父视图层级）读不到子视图设置的 environment。
-    @State private var scrollProxy: DayScrollProxy?
+    @State private var scrollProxy: InfiniteDayScrollViewInfiniteScrollProxy?
     private let source = MockTimeline(recordsPerDay: 10)
 
     var body: some View {
@@ -242,7 +242,7 @@ private struct Record: Sendable, Identifiable {
 struct TimelineDemoView: View {
 
     /// 通过 binding 拿到 proxy，供 toolbar 调用跳转。
-    @State private var scrollProxy: InfiniteScrollProxy?
+    @State private var scrollProxy: InfiniteDateScrollViewInfiniteScrollProxy?
 
     var body: some View {
         NavigationStack {
@@ -303,13 +303,20 @@ struct TimelineDemoView: View {
 
 // MARK: - 通用 Feed Demo（SwiftUIS-InfiniteScroll 模块）
 
-/// 演示通用无限滚动列表：游标分页 + 预加载 + 下拉刷新 + 错误恢复。
+/// 演示通用无限滚动列表：游标分页 + 预加载 + 下拉刷新 + 错误恢复 + 跳转定位。
 struct FeedDemoView: View {
+
+    /// 通过 binding 从 InfiniteScrollView 拿到 proxy，供外部 toolbar 调用跳转。
+    /// 仍按 FullDemoView 的模式：不用 @Environment，因为父视图层级（toolbar）读不到
+    /// 子视图设置的 environment。
+    @State private var scrollProxy: InfiniteScrollViewInfiniteScrollProxy<MockFeedItem>?
+
     var body: some View {
         NavigationStack {
             InfiniteScrollView(
                 loader: MockFeedLoader(),
-                preloadStrategy: .fixed(5)
+                preloadStrategy: .fixed(5),
+                scrollProxy: $scrollProxy
             ) { item in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.title)
@@ -326,6 +333,27 @@ struct FeedDemoView: View {
                 .padding(.vertical, 4)
             }
             .navigationTitle("Feed Demo")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        // 回到顶部：始终可用（首页必然已加载）。
+                        Button("回到顶部") {
+                            scrollProxy?.scrollToTop()
+                        }
+                        // 跳到首页内某条：首页必然已加载，稳定可跳。
+                        Button("跳到第 5 条") {
+                            scrollProxy?.scrollTo("item-4")
+                        }
+                        // 跳到非首页条目：需要用户先滚到加载过该条的位置。
+                        // proxy 对未加载的 id 会忽略（详见 InfiniteScrollViewInfiniteScrollProxy.scrollTo）。
+                        Button("跳到第 50 条（需先加载）") {
+                            scrollProxy?.scrollTo("item-49")
+                        }
+                    } label: {
+                        Image(systemName: "location.fill")
+                    }
+                }
+            }
         }
     }
 }

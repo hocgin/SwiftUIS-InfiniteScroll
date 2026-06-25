@@ -6,7 +6,7 @@ public struct InfiniteListErrorView: View {
     private let message: String
     private let retry: () -> Void
 
-    public init(message: String = "加载失败", retry: @escaping () -> Void) {
+    public init(message: String = L10n.Label.loadFailed, retry: @escaping () -> Void) {
         self.message = message
         self.retry = retry
     }
@@ -18,7 +18,7 @@ public struct InfiniteListErrorView: View {
                 .foregroundStyle(.orange)
             Text(message)
                 .font(.headline)
-            Button("点击重试") { retry() }
+            Button(L10n.Action.retry) { retry() }
                 .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity)

@@ -4,13 +4,26 @@ import os
 
 private let logger = Logger(subsystem: "com.hocgin.SwiftUIS-InfiniteScroll", category: "InfiniteStore")
 
+/// 跳转命令：Store 发出，View 监听后写入 scrollPosition。
+public struct ScrollCommand<ID: Hashable & Sendable>: Sendable, Equatable {
+    public let id: ID
+    public let token: Int
+    public let animated: Bool
+
+    public init(id: ID, token: Int, animated: Bool) {
+        self.id = id
+        self.token = token
+        self.animated = animated
+    }
+}
+
 /// 无限列表状态机：驱动分页加载、维护数据与状态。
 ///
 /// 隔离：`@MainActor` 保证状态读写都在主线程；
 /// Loader 协议方法是非隔离 `async throws`，可在任意 actor 实现。
 @MainActor
 @Observable
-public final class InfiniteStore<Item: Sendable & Identifiable> {
+public final class InfiniteStore<Item: Sendable & Identifiable> where Item.ID: Sendable {
 
     // MARK: - 公开状态
 
@@ -35,6 +48,9 @@ public final class InfiniteStore<Item: Sendable & Identifiable> {
     /// 最近一次错误（首次失败或分页失败）。
     public private(set) var lastError: (any Error)?
 
+    /// 跳转命令（供 View 监听写入 scrollPosition）。
+    public private(set) var scrollCommand: ScrollCommand<Item.ID>?
+
     // MARK: - 配置与依赖
 
     public let loader: AnyInfiniteLoader<Item>
@@ -44,6 +60,9 @@ public final class InfiniteStore<Item: Sendable & Identifiable> {
 
     private var loadTask: Task<Void, Never>?
     private var isBootstrapped = false
+
+    /// 命令计数器，保证连续跳转同一 id 也触发 onChange。
+    private var scrollToken = 0
 
     // MARK: - 初始化
 
@@ -193,5 +212,23 @@ public final class InfiniteStore<Item: Sendable & Identifiable> {
         if preloadStrategy.shouldTrigger(remaining: remaining, total: items.count) {
             loadMore()
         }
+    }
+
+    // MARK: - 跳转
+
+    /// 请求滚动到指定 id。id 不在已加载 items 中则忽略并记 warning。
+    public func requestScroll(to id: Item.ID, animated: Bool = true) {
+        guard items.contains(where: { $0.id == id }) else {
+            logger.warning("scrollTo id not found in loaded items, ignored")
+            return
+        }
+        scrollToken += 1
+        scrollCommand = ScrollCommand(id: id, token: scrollToken, animated: animated)
+    }
+
+    /// 请求回到顶部（滚动到第一个 item）。items 为空则忽略。
+    public func requestScrollToTop(animated: Bool = true) {
+        guard let first = items.first else { return }
+        requestScroll(to: first.id, animated: animated)
     }
 }

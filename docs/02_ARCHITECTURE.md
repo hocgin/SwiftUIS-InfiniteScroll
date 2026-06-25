@@ -14,14 +14,14 @@ Sources/
 │   ├── Core/                            # TimelineLoader / TimelineEngine / TimelineConfig / TimelineGrouping / TimelineState
 │   ├── Models/                          # Page / TimelineItem / TimelineSection
 │   ├── Extensions/                      # Date+TimelineGrouping
-│   ├── Configuration/                   # EnvironmentKey + InfiniteScrollProxy
+│   ├── Configuration/                   # EnvironmentKey + InfiniteDateScrollViewInfiniteScrollProxy
 │   └── Views/                           # InfiniteDateScrollView + 默认视图
 │
 └── SwiftUIS-InfiniteScrollWithDay/      # 按天日记
     ├── Support/                         # DayKey / DayRange / GapRange / Calendar+DayOps
     ├── DataSource/                      # DayDataSource / AnyDayDataSource / StaticDayDataSource / EmptyStrategy
     ├── Core/                            # InfiniteScrollController / CollapseAggregator / DayModel / DaySectionItem
-    └── UI/                              # InfiniteDayScrollView + 默认视图 + DayScrollProxy
+    └── UI/                              # InfiniteDayScrollView + 默认视图 + InfiniteDayScrollViewInfiniteScrollProxy
 ```
 
 三个模块互不依赖，target 之间不互相 import。
@@ -110,7 +110,7 @@ SwiftUI environment 是单向向下的——子视图设置的环境值父视图
 
 ```swift
 // 父视图
-@State private var proxy: DayScrollProxy?
+@State private var proxy: InfiniteDayScrollViewInfiniteScrollProxy?
 InfiniteDayScrollView(..., scrollProxy: $proxy) { ... }
 
 // toolbar
@@ -121,8 +121,8 @@ InfiniteDayScrollView(..., scrollProxy: $proxy) { ... }
 
 三个模块都遵循此约定：
 - `InfiniteScrollView` 暂未提供 proxy（通用列表一般不需要日期跳转）
-- `InfiniteDateScrollView`：`scrollProxy: Binding<InfiniteScrollProxy?>?`
-- `InfiniteDayScrollView`：`scrollProxy: Binding<DayScrollProxy?>?`
+- `InfiniteDateScrollView`：`scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>?`
+- `InfiniteDayScrollView`：`scrollProxy: Binding<InfiniteDayScrollViewInfiniteScrollProxy?>?`
 
 ---
 

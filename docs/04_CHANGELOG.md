@@ -31,8 +31,8 @@
 - `TimelineGrouping`：`day / week / month / year`（默认 day）
 - `TimelineConfig`：grouping / showEmptyDays / preloadThreshold / restoreScrollPosition
 - `TimelineEngine<Item>`（@MainActor @Observable）：状态机
-- `InfiniteScrollProxy`：`scrollTo(date)` 跳转
-- `scrollProxy: Binding<InfiniteScrollProxy?>?`：暴露给父视图（toolbar）
+- `InfiniteDateScrollViewInfiniteScrollProxy`：`scrollTo(date)` 跳转
+- `scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>?`：暴露给父视图（toolbar）
 - 修饰符：`.header` / `.loadingView` / `.errorView` / `.emptyView`
 
 #### `SwiftUIS-InfiniteScrollWithDay`（原 v1.0 模块，本次保留）
@@ -52,6 +52,16 @@
 - 采用「值类型副本」模式（参考 ScalingHeaderScrollView）：`var copy = self; copy.xxxBuilder = ...; return copy`，保持链式调用类型一致
 - 解决问题：跨模块同名 modifier 在 import 后产生歧义
 
+#### 跳转 Proxy 类型重命名（三模块统一约定）
+
+为避免跨模块 import 时跳转代理同名歧义，三模块统一采用 `<主组件>InfiniteScrollProxy` 命名：
+
+- **breaking**：`SwiftUIS-InfiniteScrollWithDate.InfiniteScrollProxy` → `InfiniteDateScrollViewInfiniteScrollProxy`
+- **breaking**：`SwiftUIS-InfiniteScrollWithDay.DayScrollProxy` → `InfiniteDayScrollViewInfiniteScrollProxy`
+- 新增 `SwiftUIS-InfiniteScroll.InfiniteScrollViewInfiniteScrollProxy<Item>`（按 id 跳转，泛型保留 Item 类型）
+
+注：`InfiniteDayScrollView` 的 environment key path `\.dayScrollProxy` 与协议 `DayScrollable` 命名保留不变，仅 public 类型重命名。
+
 ### 迁移指南（v1 → v2）
 
 ```swift
@@ -68,6 +78,18 @@ InfiniteDayScrollView(source: src) { ... }
     .gapView { GapView($0) }
 ```
 
+跳转 Proxy 类型重命名：
+
+```swift
+// v1 / 旧 v2.0
+@State private var dateProxy: InfiniteScrollProxy?
+@State private var dayProxy: DayScrollProxy?
+
+// v2
+@State private var dateProxy: InfiniteDateScrollViewInfiniteScrollProxy?
+@State private var dayProxy: InfiniteDayScrollViewInfiniteScrollProxy?
+```
+
 ### 性能
 
 - LazyVStack + onAppear 哨兵触发增量加载
@@ -79,6 +101,15 @@ InfiniteDayScrollView(source: src) { ... }
 - iOS 17+
 - macOS 15+
 - Swift 6 严格并发安全
+
+### 国际化
+
+三模块统一接入 String Catalog（`.xcstrings`），源语言为 `en`，同时提供 `zh-Hans` 与 `zh-Hant` 翻译：
+
+- 每个模块新增 `L10n` 类型安全命名空间（`Label` / `Action` / `Message`），统一通过 `String(localized:defaultValue:bundle:comment:)` 加 `.module` bundle 引用文案，移除硬编码 String 字面量；`defaultValue` 采用英文作为开发期通用基准
+- `SwiftUIS-InfiniteScroll`：7 条（emptyData / loading / loadFailed / loadFailedWithHint / noMore / retry / loadFailedGeneric）
+- `SwiftUIS-InfiniteScrollWithDate`：4 条（emptyData / emptySection / loadFailed / retry）
+- `SwiftUIS-InfiniteScrollWithDay`：4 条（emptyDay / loadFailed / gapSeparator / `gapDays(_:)` 含复数形式）
 
 ### 测试
 
@@ -106,7 +137,7 @@ InfiniteDayScrollView(source: src) { ... }
 - 控制器：`InfiniteScrollController<Item>`（@Observable @MainActor）
 - 视图：`DaySection` / `GapSection` / `LoadingSection` / `DayHeader` / `EmptyDayView`
 - 工具：`DayKey`（UTC 基） / `DayRange` / `GapRange` / `Calendar+DayOps`
-- 定位：`DayScrollProxy`（scrollToToday / scrollTo / scrollToMonth）
+- 定位：`InfiniteDayScrollViewInfiniteScrollProxy`（scrollToToday / scrollTo / scrollToMonth）
 - 修饰符（旧名）：`.dayHeader` / `.emptyDayView` / `.gapView` / `.loadingView`
 
 ### 性能
@@ -133,7 +164,7 @@ InfiniteDayScrollView(source: src) { ... }
 
 - `collapse` 折叠策略（推荐默认）
 - 双向加载（`forwardLoading: true` 启用向上加载更晚日期）
-- 月份快速跳转（`DayScrollProxy.scrollToMonth`）
+- 月份快速跳转（`InfiniteDayScrollViewInfiniteScrollProxy.scrollToMonth`）
 - `InfiniteScrollConfig` 集中配置
 
 ### 待实现（剩余 v1.1 + v1.2）

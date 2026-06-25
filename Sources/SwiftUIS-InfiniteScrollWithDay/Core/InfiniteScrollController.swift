@@ -58,7 +58,7 @@ public struct InfiniteScrollConfig: Sendable, Equatable {
 /// - 接收 DataSource 异步结果，更新对应 DayModel.state
 /// - 提供 `sectionItems: [DaySectionItem]` 供 ForEach 渲染（按 strategy 聚合）
 /// - 通过 onAppear 哨兵触发 `loadMorePast` / `loadMoreFuture`
-/// - 暴露 `proxy` 给 DayScrollProxy 做日期定位
+/// - 暴露 `proxy` 给 InfiniteDayScrollViewInfiniteScrollProxy 做日期定位
 ///
 /// 隔离边界：`@MainActor` 保证所有状态读写都在主线程，跨 actor 仅通过 await DataSource。
 @MainActor
@@ -382,7 +382,7 @@ public final class InfiniteScrollController<Item: Sendable & Identifiable>: DayS
 
     // MARK: - DayScrollable
 
-    /// 实现日期定位。供 DayScrollProxy 转发，外部不直接调用。
+    /// 实现日期定位。供 InfiniteDayScrollViewInfiniteScrollProxy 转发，外部不直接调用。
     ///
     /// - 若目标 key 超出当前 visibleRange：先扩展 days 数组覆盖目标，
     ///   再延后一帧执行 scrollTo（等 LazyVStack 渲染目标视图）。

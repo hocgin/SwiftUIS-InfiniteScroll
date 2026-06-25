@@ -121,7 +121,7 @@ InfiniteDayScrollView(source: RecordSource(), emptyStrategy: .collapse) { day, r
 .gapView { gap in GapCard(gap) }
 ```
 
-特性：三种空日策略（`showAll` / `hideEmpty` / `collapse`）；Sticky Header；双向加载（`forwardLoading`）；`DayScrollProxy.scrollToToday / scrollTo / scrollToMonth`。
+特性：三种空日策略（`showAll` / `hideEmpty` / `collapse`）；Sticky Header；双向加载（`forwardLoading`）；`InfiniteDayScrollViewInfiniteScrollProxy.scrollToToday / scrollTo / scrollToMonth`。
 
 ## 修饰符
 

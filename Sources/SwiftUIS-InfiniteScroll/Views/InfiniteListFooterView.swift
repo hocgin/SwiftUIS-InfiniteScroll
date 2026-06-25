@@ -21,7 +21,7 @@ public struct InfiniteListFooterView: View {
             HStack(spacing: 8) {
                 Spacer()
                 ProgressView()
-                Text("加载中…")
+                Text(L10n.Label.loading)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -32,7 +32,7 @@ public struct InfiniteListFooterView: View {
             Button(action: retry) {
                 HStack(spacing: 6) {
                     Image(systemName: "arrow.clockwise")
-                    Text("加载失败，点击重试")
+                    Text(L10n.Label.loadFailedWithHint)
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -45,7 +45,7 @@ public struct InfiniteListFooterView: View {
                 Rectangle()
                     .fill(Color.secondary.opacity(0.3))
                     .frame(height: 1)
-                Text("没有更多了")
+                Text(L10n.Label.noMore)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                 Rectangle()

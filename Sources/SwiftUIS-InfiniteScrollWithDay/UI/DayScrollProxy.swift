@@ -1,10 +1,10 @@
 import Foundation
 import SwiftUI
 
-/// 抽象「可滚动到指定日」的能力，供 `DayScrollProxy` 持有而不泄漏 Item 泛型。
+/// 抽象「可滚动到指定日」的能力，供 `InfiniteDayScrollViewInfiniteScrollProxy` 持有而不泄漏 Item 泛型。
 ///
 /// `InfiniteScrollController<Item>` 实现此协议；
-/// `DayScrollProxy` 仅持有 `any DayScrollable`，对外隐藏 Item 类型。
+/// `InfiniteDayScrollViewInfiniteScrollProxy` 仅持有 `any DayScrollable`，对外隐藏 Item 类型。
 @MainActor
 public protocol DayScrollable: AnyObject {
 
@@ -22,7 +22,7 @@ public protocol DayScrollable: AnyObject {
 ///
 /// Button("回到今天") { proxy?.scrollToToday() }
 /// ```
-public struct DayScrollProxy: @unchecked Sendable {
+public struct InfiniteDayScrollViewInfiniteScrollProxy: @unchecked Sendable {
 
     /// 任何 @MainActor 类型实例都不直接 Sendable；
     /// 此处用 @unchecked 表示：所有访问都在 MainActor 内完成（子视图自动 MainActor）。
@@ -63,8 +63,8 @@ public struct DayScrollProxy: @unchecked Sendable {
 
 // MARK: - EnvironmentKey
 
-private struct DayScrollProxyKey: EnvironmentKey {
-    static let defaultValue: DayScrollProxy? = nil
+private struct InfiniteDayScrollViewInfiniteScrollProxyKey: EnvironmentKey {
+    static let defaultValue: InfiniteDayScrollViewInfiniteScrollProxy? = nil
 }
 
 public extension EnvironmentValues {
@@ -72,8 +72,8 @@ public extension EnvironmentValues {
     /// 当前 InfiniteDayScrollView 的日期定位代理。
     ///
     /// 子视图通过 `@Environment(\.dayScrollProxy)` 取得。
-    var dayScrollProxy: DayScrollProxy? {
-        get { self[DayScrollProxyKey.self] }
-        set { self[DayScrollProxyKey.self] = newValue }
+    var dayScrollProxy: InfiniteDayScrollViewInfiniteScrollProxy? {
+        get { self[InfiniteDayScrollViewInfiniteScrollProxyKey.self] }
+        set { self[InfiniteDayScrollViewInfiniteScrollProxyKey.self] = newValue }
     }
 }

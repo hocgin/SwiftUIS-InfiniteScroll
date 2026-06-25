@@ -26,7 +26,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
 
     @State private var engine: TimelineEngine<Item>
     @ViewBuilder private let content: (Item) -> Content
-    private let scrollProxyBinding: Binding<InfiniteScrollProxy?>?
+    private let scrollProxyBinding: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>?
 
     /// 自定义能力 builder（由 modifier 设置，var 让副本可修改以支持链式）。
     private var headerBuilder: DateHeaderBuilder?
@@ -41,7 +41,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
     public init<L: TimelineLoader>(
         loader: L,
         config: TimelineConfig = .init(),
-        scrollProxy: Binding<InfiniteScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Item) -> Content
     ) where L.Item == Item {
         let engine = TimelineEngine<Item>(loader: loader, config: config)
@@ -61,7 +61,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
         showEmptyDays: Bool = false,
         preloadThreshold: Int = 5,
         restoreScrollPosition: Bool = false,
-        scrollProxy: Binding<InfiniteScrollProxy?>? = nil,
+        scrollProxy: Binding<InfiniteDateScrollViewInfiniteScrollProxy?>? = nil,
         @ViewBuilder content: @escaping (Item) -> Content
     ) where L.Item == Item {
         self.init(
@@ -111,7 +111,7 @@ public struct InfiniteDateScrollView<Item: TimelineItem, Content: View>: View {
             engine.reload()
         }
         .onAppear {
-            scrollProxyBinding?.wrappedValue = InfiniteScrollProxy(engine)
+            scrollProxyBinding?.wrappedValue = InfiniteDateScrollViewInfiniteScrollProxy(engine)
             engine.bootstrap()
         }
         .environment(\.dateHeaderBuilder, headerBuilder ?? .default)

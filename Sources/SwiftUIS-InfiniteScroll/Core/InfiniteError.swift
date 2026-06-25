@@ -14,7 +14,7 @@ public protocol InfiniteError: Error, Sendable {
 public struct DefaultInfiniteError: InfiniteError {
     public let userMessage: String
 
-    public init(userMessage: String = "加载失败，请重试") {
+    public init(userMessage: String = L10n.Message.loadFailedGeneric) {
         self.userMessage = userMessage
     }
 }

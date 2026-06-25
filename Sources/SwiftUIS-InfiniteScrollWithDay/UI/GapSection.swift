@@ -25,13 +25,13 @@ public struct GapSection: View {
     /// 默认样式：圆角卡片 + 灰色背景。
     private var defaultBody: some View {
         VStack(spacing: 4) {
-            Text("\(gap.count) 天空档")
+            Text(L10n.Message.gapDays(gap.count))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 4) {
                 Text(gap.start.referenceDate, format: .dateTime.month(.abbreviated).day())
-                Text("~")
+                Text(L10n.Label.gapSeparator)
                 Text(gap.end.referenceDate, format: .dateTime.month(.abbreviated).day())
             }
             .font(.caption2)

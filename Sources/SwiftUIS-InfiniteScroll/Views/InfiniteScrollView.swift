@@ -26,10 +26,11 @@ import SwiftUI
 /// .listLoadingView { SkeletonView() }
 /// .listErrorView { error, retry in ErrorView(error, retry) }
 /// ```
-public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: View {
+public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: View where Item.ID: Sendable {
 
     @State private var store: InfiniteStore<Item>
     @ViewBuilder private let content: (Item) -> Content
+    private let scrollProxyBinding: Binding<InfiniteScrollViewInfiniteScrollProxy<Item>?>?
 
     /// 自定义能力 builder（由 modifier 设置）。`var` 让副本可修改以支持链式调用。
     private var emptyBuilder: EmptyBuilder?
@@ -37,14 +38,19 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
     private var errorBuilder: ErrorViewBuilder?
     private var footerBuilder: FooterBuilder?
 
+    /// 当前滚动位置（绑定到 ScrollView）。
+    @State private var scrollPosition: Item.ID?
+
     public init<L: InfiniteLoader>(
         loader: L,
         preloadStrategy: PreloadStrategy = .defaultStrategy,
+        scrollProxy: Binding<InfiniteScrollViewInfiniteScrollProxy<Item>?>? = nil,
         @ViewBuilder content: @escaping (Item) -> Content
     ) where L.Item == Item {
         let store = InfiniteStore<Item>(loader: loader, preloadStrategy: preloadStrategy)
         self._store = State(initialValue: store)
         self.content = content
+        self.scrollProxyBinding = scrollProxy
         self.emptyBuilder = nil
         self.loadingBuilder = nil
         self.errorBuilder = nil
@@ -54,10 +60,12 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
     /// 直接传入 store（多个视图共享同一 store 时用）。
     public init(
         store: InfiniteStore<Item>,
+        scrollProxy: Binding<InfiniteScrollViewInfiniteScrollProxy<Item>?>? = nil,
         @ViewBuilder content: @escaping (Item) -> Content
     ) {
         self._store = State(initialValue: store)
         self.content = content
+        self.scrollProxyBinding = scrollProxy
         self.emptyBuilder = nil
         self.loadingBuilder = nil
         self.errorBuilder = nil
@@ -79,7 +87,19 @@ public struct InfiniteScrollView<Item: Sendable & Identifiable, Content: View>: 
                 }
             }
         }
+        .scrollPosition(id: $scrollPosition, anchor: .top)
+        .onChange(of: store.scrollCommand) { _, command in
+            guard let command else { return }
+            if command.animated {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    scrollPosition = command.id
+                }
+            } else {
+                scrollPosition = command.id
+            }
+        }
         .onAppear {
+            scrollProxyBinding?.wrappedValue = InfiniteScrollViewInfiniteScrollProxy(store)
             store.bootstrap()
         }
         .environment(\.emptyBuilder, emptyBuilder ?? .default)

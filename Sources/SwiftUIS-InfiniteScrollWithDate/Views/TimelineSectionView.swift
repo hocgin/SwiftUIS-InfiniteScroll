@@ -26,7 +26,7 @@ public struct TimelineSectionView<Item: TimelineItem, Content: View>: View {
             headerView
             if section.items.isEmpty {
                 // 空日 placeholder：展示极小提示
-                Text("无记录")
+                Text(L10n.Label.emptySection)
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .padding(.horizontal)

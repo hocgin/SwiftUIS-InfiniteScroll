@@ -5,10 +5,21 @@
 
 ## 进行中
 
-（暂无）
 
 ## 已完成
 
+- [x] 三模块本地化（en / zh-Hans / zh-Hant）
+  - SwiftUIS-InfiniteScroll：新建 `L10n.swift` + `Localizable.xcstrings`（7 条默认视图文案）
+  - SwiftUIS-InfiniteScrollWithDate：新建 `L10n.swift` + `Localizable.xcstrings`（4 条）
+  - SwiftUIS-InfiniteScrollWithDay：扩充 `L10n.swift` + `Localizable.xcstrings`（4 条，含 `%lld 天空档` / `~` 复数形式）
+  - Package.swift：`defaultLocalization` 改为 `zh-Hans`；另两 target 加 `.process("Localizable.xcstrings")`
+  - 验证：`swift build` 通过 / `swift test` 63 个全绿
+- [x] 跳转 Proxy 类型重命名（三模块统一约定 `<主组件>InfiniteScrollProxy`）
+  - `InfiniteScrollProxy` → `InfiniteDateScrollViewInfiniteScrollProxy`
+  - `DayScrollProxy` → `InfiniteDayScrollViewInfiniteScrollProxy`
+  - 同步 docs（00/01/02/03/04 + README）+ CHANGELOG 迁移指南
+  - 验证：`swift build` / `swift test`（63 passed）/ `xcodebuild App` 全绿
+- [x] `InfiniteScrollView` Demo（FeedDemoView）补充跳转示例：通过 `scrollProxy` 绑定演示 `scrollToTop()` 与 `scrollTo(id)`（含「id 未加载时被忽略」的语义说明）
 - [x] **SwiftUIS-InfiniteScroll** 模块（基于游标分页的时间轴组件）
   - [x] M0 基础设施：Package.swift 新增 target + product + 测试 target
   - [x] M1 Models 与 Core
